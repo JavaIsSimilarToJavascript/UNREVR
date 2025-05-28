@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cell Simulator Game</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="CellSim.css">
+</head>
+<body class="bg-gray-900 text-white p-6">
+
+  <!-- 상단 자원 상태 -->
+  <div class="flex justify-between items-center bg-gray-800 p-4 rounded-lg mb-6 text-sm text-green-300 font-mono">
+    <div id="resources">
+      포도당: <span id="glucose">100</span>
+    </div>
+    <div class="flex items-center">
+      에너지:
+      <div class="ml-2 w-40 h-4 bg-gray-700 rounded-full overflow-hidden">
+        <div id="energy-bar" class="bg-green-400 h-full w-3/4"></div>
+      </div>
+      <span id="energy-text" class="ml-2">70%</span>
+    </div>
+  </div>
+
+  <!-- 게임 영역 -->
+  <div class="h-72 bg-gray-800 rounded-lg flex items-center justify-center text-gray-200 mb-6 relative">
+    <div id="cell"></div>
+  </div>
+
+  <!-- 조작 버튼 -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <button onclick="synthesizeProtein()" class="bg-gray-500 hover:bg-green-300 text-black font-bold py-2 rounded-xl transition-all duration-300">핵</button>
+    <button onclick="cellDivision()" class="bg-gray-500 hover:bg-green-300 text-black font-bold py-2 rounded-xl transition-all duration-300">소포체</button>
+    <button onclick="defendCell()" class="bg-gray-500 hover:bg-green-300 text-black font-bold py-2 rounded-xl transition-all duration-300">골지체</button>
+    <button onclick="generateResource()" class="bg-gray-500 hover:bg-green-300 text-black font-bold py-2 rounded-xl transition-all duration-300">리보솜</button>
+    <button onclick="mito()" class="bg-gray-500 hover:bg-green-300 text-black font-bold py-2 rounded-xl transition-all duration-300">미토콘드리아</button>
+    <button onclick="hi()" class="bg-gray-500 hover:bg-green-300 text-black font-bold py-2 rounded-xl transition-all duration-300">리소좀</button>
+  </div>
+
+  <script src="CellSim.js"></script>
+</body>
+</html>
