@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cell Simulator Game</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Pretendard', sans-serif; }
+    #cell {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background-color: #4ade80;
+      position: relative;
+      animation: float 2s infinite ease-in-out alternate;
+    }
+    @keyframes float {
+      from { transform: translateY(0px); }
+      to { transform: translateY(-20px); }
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white p-6">
+
+  <!-- 상단 자원 상태 -->
+  <div class="flex justify-between items-center bg-gray-800 p-4 rounded-lg mb-6 text-sm text-green-300 font-mono">
+    <div id="resources">
+      포도당: <span id="glucose">100</span> |
+      아미노산: <span id="amino">80</span> |
+      지질: <span id="lipid">50</span>
+    </div>
+    <div class="flex items-center">
+      에너지:
+      <div class="ml-2 w-40 h-4 bg-gray-700 rounded-full overflow-hidden">
+        <div id="energy-bar" class="bg-green-400 h-full w-3/4"></div>
+      </div>
+      <span id="energy-text" class="ml-2">70%</span>
+    </div>
+  </div>
+
+  <!-- 게임 영역 -->
+  <div class="h-72 bg-gray-800 rounded-lg flex items-center justify-center text-gray-200 mb-6 relative">
+    <div id="cell"></div>
+  </div>
+
+  <!-- 조작 버튼 -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <button onclick="synthesizeProtein()" class="bg-green-500 hover:bg-green-400 text-black font-bold py-2 rounded-xl">단백질 합성</button>
+    <button onclick="cellDivision()" class="bg-blue-500 hover:bg-blue-400 text-black font-bold py-2 rounded-xl">세포 분열</button>
+    <button onclick="defendCell()" class="bg-red-500 hover:bg-red-400 text-black font-bold py-2 rounded-xl">방어 반응</button>
+    <button onclick="generateResource()" class="bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-2 rounded-xl">재화 생성</button>
+  </div>
+
+  <script>
+    let state = {
+      glucose: 100,
+      amino: 80,
+      lipid: 50,
+      energy: 70
+    };
+
+    function updateUI() {
+      document.getElementById('glucose').textContent = state.glucose;
+      document.getElementById('amino').textContent = state.amino;
+      document.getElementById('lipid').textContent = state.lipid;
+      document.getElementById('energy-bar').style.width = state.energy + '%';
+      document.getElementById('energy-text').textContent = state.energy + '%';
+    }
+
+    function synthesizeProtein() {
+      if (state.amino >= 10 && state.energy >= 10) {
+        state.amino -= 10;
+        state.energy -= 10;
+        alert('단백질 합성 성공!');
+      } else {
+        alert('자원이 부족합니다.');
+      }
+      updateUI();
+    }
+
+    function cellDivision() {
+      if (state.energy >= 40) {
+        state.energy -= 40;
+        alert('세포가 분열했습니다!');
+        const newCell = document.createElement('div');
+        newCell.className = 'absolute w-6 h-6 bg-green-400 rounded-full animate-ping';
+        newCell.style.left = Math.random() * 80 + '%';
+        newCell.style.top = Math.random() * 80 + '%';
+        document.querySelector('.h-72').appendChild(newCell);
+        setTimeout(() => newCell.remove(), 1000);
+      } else {
+        alert('에너지가 부족합니다.');
+      }
+      updateUI();
+    }
+
+    function defendCell() {
+      if (state.energy >= 20 && state.lipid >= 10) {
+        state.energy -= 20;
+        state.lipid -= 10;
+        alert('방어 성공!');
+      } else {
+        alert('자원이 부족합니다.');
+      }
+      updateUI();
+    }
+
+    function generateResource() {
+      state.glucose += 10;
+      state.amino += 5;
+      state.lipid += 5;
+      state.energy += 5;
+      if (state.energy > 100) state.energy = 100;
+      alert('재화가 생성되었습니다!');
+      updateUI();
+    }
+
+    updateUI();
+  </script>
+</body>
+</html>
