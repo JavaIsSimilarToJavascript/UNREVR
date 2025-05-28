@@ -22,6 +22,8 @@
       <span id="energy-text" class="ml-2">70%</span>
     </div>
   </div>
+  <h1 class='h1'>-현재 상태-</h1>
+  <div class="flex justify-center font-bold items-center bg-gray-800 rounded-lg mb-6 text-m text-green-300 p-3 mt-2">아무 것도 안 하고 있습니다..</div>
 
   <!-- 게임 영역 -->
   <div class="h-72 bg-gray-800 rounded-lg flex items-center justify-center text-gray-200 mb-6 relative">
@@ -30,13 +32,16 @@
 
   <!-- 조작 버튼 -->
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-    <button onclick="synthesizeProtein()" class="bg-gray-500 hover:bg-green-300 text-black font-bold py-2 rounded-xl transition-all duration-300">핵</button>
-    <button onclick="cellDivision()" class="bg-gray-500 hover:bg-green-300 text-black font-bold py-2 rounded-xl transition-all duration-300">소포체</button>
-    <button onclick="defendCell()" class="bg-gray-500 hover:bg-green-300 text-black font-bold py-2 rounded-xl transition-all duration-300">골지체</button>
-    <button onclick="generateResource()" class="bg-gray-500 hover:bg-green-300 text-black font-bold py-2 rounded-xl transition-all duration-300">리보솜</button>
-    <button onclick="mito()" class="bg-gray-500 hover:bg-green-300 text-black font-bold py-2 rounded-xl transition-all duration-300">미토콘드리아</button>
-    <button onclick="hi()" class="bg-gray-500 hover:bg-green-300 text-black font-bold py-2 rounded-xl transition-all duration-300">리소좀</button>
+    <button onclick="nucleus()" class="핵 bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">핵</button>
+    <button onclick="endoplasmicReticulum()" class="소포체 bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">소포체</button>
+    <button onclick="golgiApparatus()" class="골지체 bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">골지체</button>
+    <button onclick="ribosome()" class="리보솜 bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">리보솜</button>
+    <button onclick="mitochondria()" class="미토콘드리아 bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">미토콘드리아</button>
+    <button onclick="lysosome()" class="리소좀 bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">리소좀</button>
   </div>
+
+  <!-- 세부 화면 -->
+  <div class="h-72 bg-gray-800 mt-8 rounded-lg flex justify-center p-6 font-bold text-m specific">선택 안 함</div>
 
   <script src="CellSim.js"></script>
 </body>
