@@ -31,13 +31,13 @@
   </div>
 
   <!-- 조작 버튼 -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-    <button onclick="nucleus()" class="핵 bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">핵</button>
-    <button onclick="endoplasmicReticulum()" class="소포체 bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">소포체</button>
-    <button onclick="golgiApparatus()" class="골지체 bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">골지체</button>
-    <button onclick="ribosome()" class="리보솜 bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">리보솜</button>
-    <button onclick="mitochondria()" class="미토콘드리아 bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">미토콘드리아</button>
-    <button onclick="lysosome()" class="리소좀 bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">리소좀</button>
+  <div class="btns p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+    <button onclick="selectOrganelle('nucleus')" class="bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">핵</button>
+    <button onclick="selectOrganelle('endoplasmicReticulum')" class="bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">소포체</button>
+    <button onclick="selectOrganelle('golgiApparatus')" class="bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">골지체</button>
+    <button onclick="selectOrganelle('ribosome')" class="bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">리보솜</button>
+    <button onclick="selectOrganelle('mitochondria')" class="bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">미토콘드리아</button>
+    <button onclick="selectOrganelle('lysosome')" class="bg-gray-500 hover:bg-gray-400 text-black font-bold py-2 rounded-xl transition-all duration-300">리소좀</button>
   </div>
 
   <!-- 세부 화면 -->

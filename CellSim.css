@@ -11,3 +11,7 @@ body { font-family: 'Pretendard', sans-serif; }
     font-size: large;
     color: #c3c1c1
 }
+
+button.active{
+    background-color: green !important;
+}
