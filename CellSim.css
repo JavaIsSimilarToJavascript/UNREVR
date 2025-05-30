@@ -13,5 +13,5 @@ body { font-family: 'Pretendard', sans-serif; }
 }
 
 button.active{
-    background-color: green !important;
+    background-color: rgba(166, 244, 166, 0.858) !important;
 }
