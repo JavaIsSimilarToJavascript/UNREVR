@@ -1,3 +1,4 @@
+// === 전체 수정된 JavaScript 코드 ===
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const atpDisplay = document.getElementById('atp');
@@ -6,58 +7,89 @@ const waveDisplay = document.getElementById('wave');
 const basicBtn = document.getElementById('basicBtn');
 const neuronBtn = document.getElementById('neuronBtn');
 const plantBtn = document.getElementById('plantBtn');
+const upgradeBtn = document.getElementById('upgradeBtn');
 
-// === 게임 상태 변수 ===
-let ATP = 200;       
+let ATP = 200;
 let health = 5;
 let wave = 1;
 let waveInProgress = false;
 let enemiesToSpawn = 0;
 let enemiesSpawned = 0;
 let spawnInterval = null;
+let selectedCell = null;
+let selectedUpgradeTarget = null;
+const lines = [200, 400];
 const cells = [];
 const enemies = [];
 const projectiles = [];
-let selectedCell = null;
 
-// === 적 타입 데이터 ===
-const enemyTypes = [
-  { hp: 40, speed: 1.3, color: '#d22', size: 20 },
-  { hp: 60, speed: 0.7, color: '#720072', size: 30 },
-  { hp: 50, speed: 1.0, color: '#ff6', size: 25 },
-  { hp: 70, speed: 0.5, color: '#339933', size: 35 },
-  { hp: 30, speed: 2.0, color: '#3399cc', size: 15 },
-];
-const cellTypes = {
-  basic: { damage: 10, range: 80, cooldownMax: 40, color: 'cyan', cost: 50, projectileSpeed: 10},
-  neuron: { damage: 6, range: 120, cooldownMax: 100, color: 'yellow', cost: 80},
-  plant: { hp: 200, color: '#4caf50', cost: 60 }
+const baseCellTypes = {
+  basic: { damage: 5, range: 60, cooldownMax: 50, cost: 50, projectileSpeed: 8 },
+  neuron: { damage: 3, range: 100, cooldownMax: 120, cost: 80 },
+  plant: { hp: 150, cost: 60 }
 };
-let enemiesKilled = 0;
 
-// === UI 버튼 ===
+const enemyTypes = [
+  { hp: 30, speed: 1.0, color: '#d22', size: 20 },
+  { hp: 45, speed: 0.7, color: '#720072', size: 30 },
+  { hp: 35, speed: 0.9, color: '#ff6', size: 25 }
+];
+
 function updateUIButtons() {
   basicBtn.disabled = ATP < 50;
   neuronBtn.disabled = ATP < 80;
   plantBtn.disabled = ATP < 60;
+  upgradeBtn.disabled = !selectedUpgradeTarget || ATP < 50;
 }
+
 function selectCell(type) {
   selectedCell = type;
-  basicBtn.style.background = (type === 'basic') ? '#0c0' : '#0f0';
-  neuronBtn.style.background = (type === 'neuron') ? '#0c0' : '#0f0';
-  plantBtn.style.background = (type === 'plant') ? '#0c0' : '#0f0';
+  selectedUpgradeTarget = null;
+  [basicBtn, neuronBtn, plantBtn].forEach(btn => btn.style.background = '#0f0');
+  if (type === 'basic') basicBtn.style.background = '#0c0';
+  if (type === 'neuron') neuronBtn.style.background = '#0c0';
+  if (type === 'plant') plantBtn.style.background = '#0c0';
+  updateUIButtons();
 }
+
 basicBtn.addEventListener('click', () => selectCell('basic'));
 neuronBtn.addEventListener('click', () => selectCell('neuron'));
 plantBtn.addEventListener('click', () => selectCell('plant'));
 
-// === 웨이브 시스템 ===
+upgradeBtn.addEventListener('click', () => {
+  if (!selectedUpgradeTarget || ATP < 50) return;
+  ATP -= 50;
+  selectedUpgradeTarget.upgrade = (selectedUpgradeTarget.upgrade || 0) + 1;
+  const u = selectedUpgradeTarget.upgrade;
+
+  if (selectedUpgradeTarget.type === 'basic') {
+    selectedUpgradeTarget.damage = baseCellTypes.basic.damage + u * 2;
+    selectedUpgradeTarget.range = baseCellTypes.basic.range + u * 10;
+  } else if (selectedUpgradeTarget.type === 'neuron') {
+    selectedUpgradeTarget.damage = baseCellTypes.neuron.damage + u * 1.5;
+    selectedUpgradeTarget.range = baseCellTypes.neuron.range + u * 8;
+  } else if (selectedUpgradeTarget.type === 'plant') {
+    selectedUpgradeTarget.hp += 30;
+  }
+
+  atpDisplay.textContent = ATP;
+  updateUIButtons();
+});
+
+function drawEnemyStats(e) {
+  ctx.fillStyle = 'white';
+  ctx.font = '12px Arial';
+  ctx.fillText(`HP:${Math.round(e.hp)}`, e.x - 15, e.y - e.size - 18);
+  ctx.fillText(`DMG:${e.damageToCell}`, e.x - 15, e.y - e.size - 6);
+}
+
 function startWave() {
   waveInProgress = true;
   enemiesSpawned = 0;
   enemiesToSpawn = 5 + wave * 2;
   spawnInterval = setInterval(spawnEnemy, Math.max(2000 - wave * 150, 500));
 }
+
 function spawnEnemy() {
   if (enemiesSpawned >= enemiesToSpawn) {
     clearInterval(spawnInterval);
@@ -66,9 +98,10 @@ function spawnEnemy() {
   }
   enemiesSpawned++;
   const base = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+  const yLine = lines[Math.floor(Math.random() * lines.length)];
   enemies.push({
     x: 0,
-    y: 300,
+    y: yLine,
     hp: base.hp + wave * 5,
     maxHp: base.hp + wave * 5,
     damageToCell: 1 + Math.floor(wave / 3),
@@ -79,6 +112,7 @@ function spawnEnemy() {
     blockTimer: 0
   });
 }
+
 function checkWaveClear() {
   if (!waveInProgress && enemies.length === 0) {
     if (wave < 10) {
@@ -87,90 +121,116 @@ function checkWaveClear() {
       alert(`Wave ${wave} 시작!`);
       startWave();
     } else {
-      alert('축하합니다! 모든 웨이브를 클리어했습니다!');
+      alert('🎉 모든 웨이브 클리어!');
     }
   }
 }
 
-// === ATP 지급량 감소 (조절 주석) ===
 setInterval(() => {
-  ATP += Math.floor(cells.length * 3); // 지급량 줄임 (원래 5 -> 3)
+  ATP += Math.floor(cells.length * 3);
   atpDisplay.textContent = ATP;
   updateUIButtons();
 }, 1000);
 
-// === 세포 배치 ===
 canvas.addEventListener('click', (e) => {
-  if (!selectedCell) return;
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
-  let cost = cellTypes[selectedCell].cost;
-  if (ATP < cost) return;
-  if (selectedCell === 'plant') {
-    if (y < 280 || y > 320) {
-      alert('식물 세포는 적이 지나가는 라인에만 설치 가능합니다.');
-      return;
+
+  if (selectedCell) {
+    const cost = baseCellTypes[selectedCell].cost;
+    if (ATP < cost) return;
+    if (selectedCell === 'plant') {
+      if (!lines.some(line => Math.abs(y - line) <= 20)) return;
+    } else {
+      if (lines.some(line => Math.abs(y - line) <= 20)) return;
     }
-  } else {
-    if (y >= 280 && y <= 320) {
-      alert('적이 지나가는 라인에는 설치할 수 없습니다.');
+    const cell = {
+      x, y, type: selectedCell, cooldown: 0, hp: baseCellTypes[selectedCell].hp,
+      damage: baseCellTypes[selectedCell].damage,
+      range: baseCellTypes[selectedCell].range,
+      upgrade: 0
+    };
+    if (selectedCell === 'plant') {
+      cell.width = 40;
+      cell.height = 60;
+    }
+    cells.push(cell);
+    ATP -= cost;
+    atpDisplay.textContent = ATP;
+    selectedCell = null;
+    [basicBtn, neuronBtn, plantBtn].forEach(btn => btn.style.background = '#0f0');
+    updateUIButtons();
+    return;
+  }
+
+  for (const cell of cells) {
+    const dx = x - cell.x;
+    const dy = y - cell.y;
+    if ((cell.type === 'plant' && Math.abs(dx) <= 20 && Math.abs(dy) <= 30) ||
+        (cell.type !== 'plant' && Math.hypot(dx, dy) <= 20)) {
+      selectedUpgradeTarget = cell;
+      updateUIButtons();
       return;
     }
   }
-  let cell = { x, y, type: selectedCell, cooldown: 0, hp: cellTypes[selectedCell].hp };
-  if (selectedCell === 'plant') {
-    cell.hp = cellTypes.plant.hp;
-    cell.width = 40;
-    cell.height = 60;
-  }
-  cells.push(cell);
-  ATP -= cost;
-  atpDisplay.textContent = ATP;
-  selectedCell = null;
-  basicBtn.style.background = '#0f0';
-  neuronBtn.style.background = '#0f0';
-  plantBtn.style.background = '#0f0';
+  selectedUpgradeTarget = null;
   updateUIButtons();
 });
 
-// === 게임 루프 ===
+function drawHealthBar(x, y, width, height, hp, maxHp) {
+  ctx.fillStyle = 'black';
+  ctx.fillRect(x, y, width, height);
+  ctx.fillStyle = 'lime';
+  ctx.fillRect(x, y, width * (hp / maxHp), height);
+  ctx.strokeStyle = 'white';
+  ctx.strokeRect(x, y, width, height);
+}
+
+function drawElectricArc(x, y, targets) {
+  ctx.strokeStyle = 'yellow';
+  ctx.lineWidth = 3;
+  targets.forEach(t => {
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(t.x, t.y);
+    ctx.stroke();
+  });
+}
+
 function loop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = '#222';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.strokeStyle = '#0f0';
   ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(0, 300);
-  ctx.lineTo(800, 300);
-  ctx.stroke();
+  lines.forEach(y => {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(800, y);
+    ctx.stroke();
+  });
 
-  // === 세포 그리기 ===
   cells.forEach(cell => {
     if (cell.type === 'plant') {
-      ctx.fillStyle = cellTypes.plant.color;
+      ctx.fillStyle = baseCellTypes.plant.color;
       ctx.fillRect(cell.x - cell.width/2, cell.y - cell.height/2, cell.width, cell.height);
-      ctx.strokeStyle = '#070';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(cell.x - cell.width/2, cell.y - cell.height/2, cell.width, cell.height);
-      drawHealthBar(cell.x - cell.width/2, cell.y - cell.height/2 - 10, cell.width, 6, cell.hp, cellTypes.plant.hp);
     } else {
-      ctx.fillStyle = cellTypes[cell.type].color;
+      ctx.fillStyle = cell.type === 'basic' ? 'cyan' : 'yellow';
       ctx.beginPath();
       ctx.arc(cell.x, cell.y, 20, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      if (cell.hp) drawHealthBar(cell.x - 20, cell.y - 35, 40, 6, cell.hp, cellTypes[cell.type].hp);
+    }
+    drawHealthBar(cell.x - 20, cell.y - 35, 40, 6, cell.hp, baseCellTypes[cell.type].hp);
+    if (cell.upgrade > 0) {
+      ctx.fillStyle = 'white';
+      ctx.font = '12px Arial';
+      ctx.fillText(`Lv.${cell.upgrade}`, cell.x - 12, cell.y + 30);
     }
   });
 
-  // === 세포 공격 ===
   cells.forEach(cell => {
     if (cell.type === 'plant') return;
-    const ctype = cellTypes[cell.type];
     if (cell.cooldown > 0) {
       cell.cooldown--;
       return;
@@ -179,29 +239,26 @@ function loop() {
       let target = null;
       let minDist = Infinity;
       enemies.forEach(e => {
-        const dx = e.x - cell.x;
-        const dy = e.y - cell.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist <= ctype.range && dist < minDist) {
+        const dist = Math.hypot(e.x - cell.x, e.y - cell.y);
+        if (dist <= cell.range && dist < minDist) {
           minDist = dist;
           target = e;
         }
       });
       if (target) {
-        projectiles.push({ x: cell.x, y: cell.y, target: target, damage: ctype.damage, speed: ctype.projectileSpeed });
-        cell.cooldown = ctype.cooldownMax;
+        projectiles.push({ x: cell.x, y: cell.y, target, damage: cell.damage, speed: baseCellTypes.basic.projectileSpeed });
+        cell.cooldown = baseCellTypes.basic.cooldownMax;
       }
     } else if (cell.type === 'neuron') {
-      const targets = enemies.filter(e => Math.hypot(e.x - cell.x, e.y - cell.y) <= ctype.range);
+      const targets = enemies.filter(e => Math.hypot(e.x - cell.x, e.y - cell.y) <= cell.range);
       if (targets.length > 0) {
-        targets.forEach(t => t.hp -= ctype.damage);
+        targets.forEach(t => t.hp -= cell.damage);
         cell.arcTargets = targets;
-        cell.cooldown = ctype.cooldownMax;
+        cell.cooldown = baseCellTypes.neuron.cooldownMax;
       }
     }
   });
 
-  // === 적 이동 및 세포 충돌 ===
   enemies.forEach(e => {
     if (!e.blocked) e.speedCurrent = e.speed;
     else {
@@ -239,9 +296,9 @@ function loop() {
     ctx.strokeStyle = 'black';
     ctx.stroke();
     drawHealthBar(e.x - e.size, e.y - e.size - 10, e.size * 2, 6, e.hp, e.maxHp);
+    drawEnemyStats(e);
   });
 
-  // === 투사체 ===
   for (let i = projectiles.length - 1; i >= 0; i--) {
     const p = projectiles[i];
     if (!p.target || p.target.hp <= 0) { projectiles.splice(i, 1); continue; }
@@ -267,46 +324,25 @@ function loop() {
     }
   });
 
-  // === 적 제거 및 health 감소 ===
   for (let i = enemies.length - 1; i >= 0; i--) {
     if (enemies[i].hp <= 0) {
       enemies.splice(i, 1);
-      enemiesKilled++;
     } else if (enemies[i].x > 800) {
       health--;
       healthDisplay.textContent = health;
       enemies.splice(i, 1);
       if (health <= 0) {
-        alert('게임 종료! 세포가 모두 파괴되었습니다.');
-        window.location.reload();
+        cancelAnimationFrame(loopId);
+        alert('게임 종료!');
+        return;
       }
     }
   }
-
-  // === 웨이브 클리어 ===
   checkWaveClear();
-  requestAnimationFrame(loop);
-}
-function drawHealthBar(x, y, width, height, hp, maxHp) {
-  ctx.fillStyle = 'black';
-  ctx.fillRect(x, y, width, height);
-  ctx.fillStyle = 'lime';
-  ctx.fillRect(x, y, width * (hp / maxHp), height);
-  ctx.strokeStyle = 'white';
-  ctx.strokeRect(x, y, width, height);
-}
-function drawElectricArc(x, y, targets) {
-  ctx.strokeStyle = 'yellow';
-  ctx.lineWidth = 3;
-  targets.forEach(t => {
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(t.x, t.y);
-    ctx.stroke();
-  });
+  loopId = requestAnimationFrame(loop);
 }
 
-// === 시작 ===
+let loopId;
 updateUIButtons();
 waveDisplay.textContent = wave;
 startWave();

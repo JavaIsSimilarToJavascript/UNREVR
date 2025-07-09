@@ -1,439 +1,373 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <title>Cell Defense - 웨이브 모드</title>
   <style>
     body { margin: 0; background: #222; color: #eee; font-family: Arial; display: flex; flex-direction: column; align-items: center; }
-    #gameCanvas {
-      background: #111;
-      border: 5px solid #0f0;
-      display: block;
-      margin-top: 20px;
-      position: relative;
-    }
-    #ui {
-      width: 800px;
-      background: #333;
-      padding: 15px;
-      border-radius: 8px;
-      border: 2px solid #0f0;
-      color: #0f0;
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin: 20px 0 40px 0;
-      flex-wrap: wrap;
-      user-select: none;
-    }
-    #ui > div {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: bold;
-      font-size: 18px;
-    }
-    #ui button {
-      background: #0f0;
-      color: #000;
-      border: none;
-      padding: 8px 12px;
-      cursor: pointer;
-      border-radius: 4px;
-      font-weight: bold;
-      transition: background-color 0.3s;
-    }
-    #ui button:hover {
-      background: #0c0;
-    }
-    #ui button:disabled {
-      background: #444;
-      color: #999;
-      cursor: default;
-    }
-    #waveBanner {
-      position: absolute;
-      top: 40px;
-      font-size: 48px;
-      color: #0f0;
-      text-align: center;
-      width: 100%;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 1s;
-      z-index: 10;
-    }
+    #gameCanvas { background: #111; border: 5px solid #0f0; display: block; margin-top: 20px; position: relative; }
+    #ui { width: 800px; background: #333; padding: 15px; border-radius: 8px; border: 2px solid #0f0; color: #0f0; display: flex; justify-content: center; gap: 15px; margin: 20px 0 40px; flex-wrap: wrap; }
+    #ui > div { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 18px; }
+    #ui button { background: #0f0; color: #000; border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; }
+    #ui button:hover { background: #0c0; }
+    #ui button:disabled { background: #444; color: #999; cursor: default; }
+    #waveBanner { position: absolute; top: 40px; font-size: 48px; color: #0f0; text-align: center; width: 100%; pointer-events: none; opacity: 0; transition: opacity 1s; z-index: 10; }
+    #timer { font-size: 20px; color: #ff0; margin-left: 10px; }
+    #score, #highScore { font-size: 18px; color: #fff; margin-left: 10px; }
   </style>
 </head>
 <body>
-  <div style="position: relative;">
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <h1 id="waveBanner">Wave 1</h1>
-  </div>
   <div id="ui">
     <div>ATP: <span id="atp">200</span></div>
-    <div>Health: <span id="health">5</span></div>
-    <div>Wave: <span id="wave">1</span></div>
-    <button id="basicBtn">일반 세포 (50 ATP)</button>
-    <button id="neuronBtn">뉴런 (80 ATP)</button>
-    <button id="plantBtn">식물 세포 (60 ATP)</button>
-    <button id="upgradeBtn">세포 업그레이드 (100 ATP)</button>
+    <div>체력: <span id="health">5</span></div>
+    <div>웨이브: <span id="wave">1</span></div>
+    <button id="basicBtn">기본세포(50)</button>
+    <button id="neuronBtn">뉴런(80)</button>
+    <button id="plantBtn">식물(60)</button>
+    <button id="upgradeBtn">업그레이드(50)</button>
+    <button id="startBtn">다음 웨이브</button>
+    <span id="timer"></span>
+    <span id="score">Score: 0</span>
+    <span id="highScore">0</span>
   </div>
-
+  <div style="position:relative;">
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="waveBanner"></div>
+  </div>
   <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const waveBanner = document.getElementById('waveBanner');
-    const atpDisplay = document.getElementById('atp');
-    const healthDisplay = document.getElementById('health');
-    const waveDisplay = document.getElementById('wave');
-    const basicBtn = document.getElementById('basicBtn');
-    const neuronBtn = document.getElementById('neuronBtn');
-    const plantBtn = document.getElementById('plantBtn');
-    const upgradeBtn = document.getElementById('upgradeBtn');
+// === Cell Defense: Final Fixes ===
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const waveBanner = document.getElementById('waveBanner');
+const atpDisplay = document.getElementById('atp');
+const healthDisplay = document.getElementById('health');
+const waveDisplay = document.getElementById('wave');
+const basicBtn = document.getElementById('basicBtn');
+const neuronBtn = document.getElementById('neuronBtn');
+const plantBtn = document.getElementById('plantBtn');
+const upgradeBtn = document.getElementById('upgradeBtn');
+const startBtn = document.getElementById('startBtn');
+const timerDisplay = document.getElementById('timer');
+const scoreDisplay = document.getElementById('score');
+const highScoreDisplay = document.getElementById('highScore');
 
-    let ATP = 200;
-    let health = 5;
-    let wave = 1;
-    let waveInProgress = false;
-    let enemiesToSpawn = 0;
-    let enemiesSpawned = 0;
-    let spawnInterval = null;
-    let upgradeLevel = 0;
+let ATP = 200;
+let health = 5;
+let wave = 1;
+let enemiesToSpawn = 0;
+let enemiesSpawned = 0;
+let waveInProgress = false;
+let interWave = false;      // inter-wave upgrade period
+let interSeconds = 30;
+let interTimer = null;
+let spawnInterval = null;
+let selectedCell = null;
+let selectedUpgradeTarget = null;
+let mouseX = 0, mouseY = 0;
+let score = 0;
+let highScore = parseInt(localStorage.getItem('gdh_highScore')) || 0;
+highScoreDisplay.textContent = highScore;
 
-    const lines = [200, 400];
-    const cells = [];
-    const enemies = [];
-    const projectiles = [];
-    let selectedCell = null;
+let lines = [200, 400];
+const cells = [];
+const enemies = [];
+const projectiles = [];
 
-    const baseCellTypes = {
-      basic: { damage: 5, range: 60, cooldownMax: 50, cost: 50, projectileSpeed: 8 },
-      neuron: { damage: 3, range: 100, cooldownMax: 120, cost: 80 },
-      plant: { hp: 150, cost: 60 }
-    };
+const baseCellTypes = {
+  basic:  { damage:5, range:60, cooldownMax:50, cost:50, projectileSpeed:8 },
+  neuron: { damage:3, range:100, cooldownMax:120, cost:80 },
+  plant:  { hp:150, cost:60 }
+};
+const enemyTypes = [
+  { hp:30, speed:1.0, color:'#d22', size:20 },
+  { hp:45, speed:0.7, color:'#720072', size:30 },
+  { hp:35, speed:0.9, color:'#ff6', size:25 }
+];
 
-    const enemyTypes = [
-      { hp: 30, speed: 1.0, color: '#d22', size: 20 },
-      { hp: 45, speed: 0.7, color: '#720072', size: 30 },
-      { hp: 35, speed: 0.9, color: '#ff6', size: 25 }
-    ];
+function updateUIButtons() {
+  // Enable placement/upgrades only during inter-wave
+  basicBtn.disabled   = ATP < baseCellTypes.basic.cost  || !interWave;
+  neuronBtn.disabled  = ATP < baseCellTypes.neuron.cost || !interWave;
+  plantBtn.disabled   = ATP < baseCellTypes.plant.cost  || !interWave;
+  upgradeBtn.disabled = !selectedUpgradeTarget || ATP < 50 || !interWave;
+  startBtn.style.display = interWave ? 'inline-block' : 'none';
+  timerDisplay.style.display = interWave ? 'inline-block' : 'none';
+}
 
-    function updateUIButtons() {
-      basicBtn.disabled = ATP < 50;
-      neuronBtn.disabled = ATP < 80;
-      plantBtn.disabled = ATP < 60;
-      upgradeBtn.disabled = ATP < 100;
-    }
+function selectCell(type) {
+  selectedCell = type;
+  selectedUpgradeTarget = null;
+  [basicBtn, neuronBtn, plantBtn].forEach(b => b.style.background = '#0f0');
+  if (type==='basic')  basicBtn.style.background = '#0c0';
+  if (type==='neuron') neuronBtn.style.background = '#0c0';
+  if (type==='plant')  plantBtn.style.background = '#0c0';
+  updateUIButtons();
+}
+basicBtn.addEventListener('click', () => selectCell('basic'));
+neuronBtn.addEventListener('click', () => selectCell('neuron'));
+plantBtn.addEventListener('click', () => selectCell('plant'));
 
-    function selectCell(type) {
-      selectedCell = type;
-      [basicBtn, neuronBtn, plantBtn].forEach(btn => btn.style.background = '#0f0');
-      if (type === 'basic') basicBtn.style.background = '#0c0';
-      if (type === 'neuron') neuronBtn.style.background = '#0c0';
-      if (type === 'plant') plantBtn.style.background = '#0c0';
-    }
+upgradeBtn.addEventListener('click', () => {
+  if (!selectedUpgradeTarget || ATP < 50) return;
+  ATP -= 50;
+  atpDisplay.textContent = ATP;
+  const c = selectedUpgradeTarget;
+  c.upgrade = (c.upgrade || 0) + 1;
+  const u = c.upgrade;
+  if (c.type==='basic') {
+    c.damage = baseCellTypes.basic.damage + u*2;
+    c.range  = baseCellTypes.basic.range + u*10;
+  } else if (c.type==='neuron') {
+    c.damage = baseCellTypes.neuron.damage + u*1.5;
+    c.range  = baseCellTypes.neuron.range + u*8;
+  } else {
+    c.hp += 30;
+  }
+  updateUIButtons();
+});
 
-    basicBtn.addEventListener('click', () => selectCell('basic'));
-    neuronBtn.addEventListener('click', () => selectCell('neuron'));
-    plantBtn.addEventListener('click', () => selectCell('plant'));
-    upgradeBtn.addEventListener('click', () => {
-      if (ATP < 100) return;
-      ATP -= 100;
-      upgradeLevel++;
-      atpDisplay.textContent = ATP;
-      applyUpgrades();
-      updateUIButtons();
-    });
+startBtn.addEventListener('click', () => {
+  interWave = false;
+  waveInProgress = true;
+  waveDisplay.textContent = wave;
+  updateUIButtons();
+  spawnWave();
+});
 
-    function applyUpgrades() {
-      cells.forEach(cell => {
-        if (cell.type === 'basic') {
-          cell.damage = (cell.damage || baseCellTypes.basic.damage) + upgradeLevel * 2;
-          cell.range = (cell.range || baseCellTypes.basic.range) + upgradeLevel * 10;
-        } else if (cell.type === 'neuron') {
-          cell.damage = (cell.damage || baseCellTypes.neuron.damage) + upgradeLevel;
-          cell.range = (cell.range || baseCellTypes.neuron.range) + upgradeLevel * 8;
-        } else if (cell.type === 'plant') {
-          cell.hp += 30 * upgradeLevel;
-        }
-      });
-    }
+function showWaveBanner(txt) {
+  waveBanner.textContent = txt;
+  waveBanner.style.opacity = 1;
+  setTimeout(() => waveBanner.style.opacity = 0, 2000);
+}
 
-    function showWaveBanner(text) {
-      waveBanner.textContent = text;
-      waveBanner.style.opacity = 1;
-      setTimeout(() => { waveBanner.style.opacity = 0; }, 2000);
-    }
+function spawnWave() {
+  enemiesSpawned = 0;
+  enemiesToSpawn = 5 + wave * 2;
+  if (wave % 5 === 0 && wave > 1) enemiesToSpawn *= 2;
+  showWaveBanner(`Wave ${wave}`);
+  spawnInterval = setInterval(spawnEnemy, Math.max(2000 - wave*150, 500));
+}
 
-    function startWave() {
-      waveInProgress = true;
-      enemiesSpawned = 0;
-      enemiesToSpawn = (wave === 5 || wave === 10) ? 1 : 5 + wave * 2;
-      showWaveBanner(`Wave ${wave}`);
-      spawnInterval = setInterval(spawnEnemy, Math.max(2000 - wave * 150, 500));
-    }
+function spawnEnemy() {
+  if (enemiesSpawned >= enemiesToSpawn) {
+    clearInterval(spawnInterval);
+    waveInProgress = false;
+    startInterWave();
+    return;
+  }
+  enemiesSpawned++;
+  const base = enemyTypes[Math.floor(Math.random()*enemyTypes.length)];
+  const y = lines[Math.floor(Math.random()*lines.length)];
+  enemies.push({
+    x:0, y,
+    hp: base.hp + wave*5,
+    maxHp: base.hp + wave*5,
+    damageToCell: 1 + Math.floor(wave/3),
+    speed: base.speed + wave*0.05,
+    color: base.color,
+    size: base.size,
+    blocked: false,
+    blockTimer: 0
+  });
+}
 
-    function spawnEnemy() {
-      if (enemiesSpawned >= enemiesToSpawn) {
-        clearInterval(spawnInterval);
-        waveInProgress = false;
-        return;
+function startInterWave() {
+  interWave = true;
+  interSeconds = 30;
+  timerDisplay.textContent = `Upgrade Time: ${interSeconds}s`;
+  updateUIButtons();
+  interTimer = setInterval(() => {
+    interSeconds--;
+    timerDisplay.textContent = `Upgrade Time: ${interSeconds}s`;
+    if (interSeconds <= 0) {
+      clearInterval(interTimer);
+      wave++;
+      scoreDisplay.textContent = `Score: ${score}`;
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('gdh_highScore', highScore);
+        highScoreDisplay.textContent = highScore;
       }
-
-      // 보스
-      if ((wave === 5 || wave === 10) && enemiesSpawned === 0) {
-        enemies.push({
-          x: 0,
-          y: 300,
-          hp: (wave === 5 ? 800 : 2000),
-          maxHp: (wave === 5 ? 800 : 2000),
-          damageToCell: (wave === 5 ? 4 : 8),
-          speed: 0.6,
-          color: (wave === 5 ? 'orange' : 'red'),
-          size: (wave === 5 ? 50 : 70),
-          blocked: false,
-          blockTimer: 0
-        });
-        enemiesSpawned++;
-        clearInterval(spawnInterval);
-        waveInProgress = false;
-        return;
-      }
-
-      enemiesSpawned++;
-      const base = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
-      const yLine = lines[Math.floor(Math.random() * lines.length)];
-
-      enemies.push({
-        x: 0,
-        y: yLine,
-        hp: base.hp + wave * 3,
-        maxHp: base.hp + wave * 3,
-        damageToCell: 1 + Math.floor(wave / 3),
-        speed: base.speed + wave * 0.03,
-        color: base.color,
-        size: base.size,
-        blocked: false,
-        blockTimer: 0
-      });
+      startBtn.click();
     }
+  }, 1000);
+}
 
-    function checkWaveClear() {
-      if (!waveInProgress && enemies.length === 0) {
-        if (wave < 10) {
-          wave++;
-          waveDisplay.textContent = wave;
-          startWave();
-        } else {
-          showWaveBanner('🎉 모든 웨이브 클리어!');
-        }
-      }
-    }
+canvas.addEventListener('mousemove', e => {
+  const r = canvas.getBoundingClientRect();
+  mouseX = e.clientX - r.left;
+  mouseY = e.clientY - r.top;
+});
 
-    setInterval(() => {
-      ATP += Math.floor(cells.length * 3);
-      atpDisplay.textContent = ATP;
-      updateUIButtons();
-    }, 1000);
-
-    canvas.addEventListener('click', (e) => {
-      if (!selectedCell) return;
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      let cost = baseCellTypes[selectedCell].cost;
-      if (ATP < cost) return;
-
-      if (selectedCell === 'plant') {
-        if (!lines.some(line => Math.abs(y - line) <= 20)) return;
-      } else {
-        if (lines.some(line => Math.abs(y - line) <= 20)) return;
-      }
-
-      let cell = { x, y, type: selectedCell, cooldown: 0, hp: baseCellTypes[selectedCell].hp };
-      cell.damage = baseCellTypes[selectedCell].damage;
-      cell.range = baseCellTypes[selectedCell].range;
-      if (selectedCell === 'plant') {
-        cell.width = 40;
-        cell.height = 60;
-      }
-
-      cells.push(cell);
-      ATP -= cost;
-      atpDisplay.textContent = ATP;
-      selectedCell = null;
-      [basicBtn, neuronBtn, plantBtn].forEach(btn => btn.style.background = '#0f0');
-      updateUIButtons();
-    });
-
-    function loop() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#222';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.strokeStyle = '#0f0';
-      ctx.lineWidth = 3;
-      lines.forEach(y => {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(800, y);
-        ctx.stroke();
-      });
-
-      cells.forEach(cell => {
-        if (cell.type === 'plant') {
-          ctx.fillStyle = baseCellTypes.plant.color;
-          ctx.fillRect(cell.x - cell.width/2, cell.y - cell.height/2, cell.width, cell.height);
-          ctx.strokeStyle = '#070';
-          ctx.lineWidth = 3;
-          ctx.strokeRect(cell.x - cell.width/2, cell.y - cell.height/2, cell.width, cell.height);
-          drawHealthBar(cell.x - cell.width/2, cell.y - cell.height/2 - 10, cell.width, 6, cell.hp, baseCellTypes.plant.hp);
-        } else {
-          ctx.fillStyle = cell.type === 'basic' ? 'cyan' : 'yellow';
-          ctx.beginPath();
-          ctx.arc(cell.x, cell.y, 20, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = '#fff';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-          drawHealthBar(cell.x - 20, cell.y - 35, 40, 6, cell.hp, baseCellTypes[cell.type].hp);
-        }
-      });
-
-      cells.forEach(cell => {
-        if (cell.type === 'plant') return;
-        if (cell.cooldown > 0) {
-          cell.cooldown--;
-          return;
-        }
-        if (cell.type === 'basic') {
-          let target = null;
-          let minDist = Infinity;
-          enemies.forEach(e => {
-            const dist = Math.hypot(e.x - cell.x, e.y - cell.y);
-            if (dist <= cell.range && dist < minDist) {
-              minDist = dist;
-              target = e;
-            }
-          });
-          if (target) {
-            projectiles.push({ x: cell.x, y: cell.y, target, damage: cell.damage, speed: baseCellTypes.basic.projectileSpeed });
-            cell.cooldown = baseCellTypes.basic.cooldownMax;
-          }
-        } else if (cell.type === 'neuron') {
-          const targets = enemies.filter(e => Math.hypot(e.x - cell.x, e.y - cell.y) <= cell.range);
-          if (targets.length > 0) {
-            targets.forEach(t => t.hp -= cell.damage);
-            cell.arcTargets = targets;
-            cell.cooldown = baseCellTypes.neuron.cooldownMax;
-          }
-        }
-      });
-
-      enemies.forEach(e => {
-        if (!e.blocked) e.speedCurrent = e.speed;
-        else {
-          e.blockTimer--;
-          if (e.blockTimer <= 0) {
-            e.blocked = false;
-            e.speedCurrent = e.speed;
-          }
-        }
-        let blockedNow = false;
-        for (const cell of cells) {
-          const dx = Math.abs(e.x - cell.x);
-          const dy = Math.abs(e.y - cell.y);
-          if (cell.type === 'plant') {
-            if (dx <= (cell.width/2 + e.size) && dy <= (cell.height/2 + e.size*0.6)) {
-              e.blocked = true;
-              e.blockTimer = 30;
-              e.speedCurrent = 0;
-              cell.hp -= e.damageToCell;
-              if (cell.hp <= 0) cells.splice(cells.indexOf(cell), 1);
-              blockedNow = true;
-            }
-          } else {
-            if (Math.hypot(dx, dy) < 25) {
-              cell.hp -= e.damageToCell;
-              if (cell.hp <= 0) cells.splice(cells.indexOf(cell), 1);
-            }
-          }
-        }
-        if (!blockedNow) e.x += e.speedCurrent || e.speed;
-        ctx.fillStyle = e.color;
-        ctx.beginPath();
-        ctx.ellipse(e.x, e.y, e.size, e.size * 0.6, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = 'black';
-        ctx.stroke();
-        drawHealthBar(e.x - e.size, e.y - e.size - 10, e.size * 2, 6, e.hp, e.maxHp);
-      });
-
-      for (let i = projectiles.length - 1; i >= 0; i--) {
-        const p = projectiles[i];
-        if (!p.target || p.target.hp <= 0) { projectiles.splice(i, 1); continue; }
-        const dx = p.target.x - p.x;
-        const dy = p.target.y - p.y;
-        const dist = Math.hypot(dx, dy);
-        if (dist < p.speed) {
-          p.target.hp -= p.damage;
-          projectiles.splice(i, 1);
-        } else {
-          p.x += (dx / dist) * p.speed;
-          p.y += (dy / dist) * p.speed;
-          ctx.fillStyle = 'white';
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      cells.forEach(cell => {
-        if (cell.type === 'neuron' && cell.arcTargets && cell.cooldown > 0) {
-          drawElectricArc(cell.x, cell.y, cell.arcTargets);
-          if (cell.cooldown === 1) cell.arcTargets = null;
-        }
-      });
-
-      for (let i = enemies.length - 1; i >= 0; i--) {
-        if (enemies[i].hp <= 0) {
-          enemies.splice(i, 1);
-        } else if (enemies[i].x > 800) {
-          health--;
-          healthDisplay.textContent = health;
-          enemies.splice(i, 1);
-          if (health <= 0) {
-            showWaveBanner('게임 종료!');
-          }
-        }
-      }
-      checkWaveClear();
-      requestAnimationFrame(loop);
-    }
-
-    function drawHealthBar(x, y, width, height, hp, maxHp) {
-      ctx.fillStyle = 'black';
-      ctx.fillRect(x, y, width, height);
-      ctx.fillStyle = 'lime';
-      ctx.fillRect(x, y, width * (hp / maxHp), height);
-      ctx.strokeStyle = 'white';
-      ctx.strokeRect(x, y, width, height);
-    }
-
-    function drawElectricArc(x, y, targets) {
-      ctx.strokeStyle = 'yellow';
-      ctx.lineWidth = 3;
-      targets.forEach(t => {
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(t.x, t.y);
-        ctx.stroke();
-      });
-    }
-
+canvas.addEventListener('click', e => {
+  const r = canvas.getBoundingClientRect();
+  const x = e.clientX - r.left;
+  const y = e.clientY - r.top;
+  // Placement
+  if (selectedCell && interWave) {
+    const cost = baseCellTypes[selectedCell].cost;
+    if (ATP < cost) return;
+    if (selectedCell==='plant' && !lines.some(L=>Math.abs(y-L)<=20)) return;
+    if (selectedCell!=='plant' && lines.some(L=>Math.abs(y-L)<=20)) return;
+    const cell = { x,y,type:selectedCell,cooldown:0,hp:baseCellTypes[selectedCell].hp,damage:baseCellTypes[selectedCell].damage||0,range:baseCellTypes[selectedCell].range||0,upgrade:0 };
+    if (selectedCell==='plant') { cell.width=40; cell.height=60; }
+    cells.push(cell);
+    ATP -= cost;
+    atpDisplay.textContent = ATP;
+    selectedCell = null;
+    selectedUpgradeTarget = null;
+    [basicBtn, neuronBtn, plantBtn].forEach(b=>b.style.background='#0f0');
     updateUIButtons();
-    waveDisplay.textContent = wave;
-    startWave();
-    loop();
+    return;
+  }
+  // Upgrade selection
+  for (const c of cells) {
+    const dx = x - c.x;
+    const dy = y - c.y;
+    const hit = (c.type==='plant') ? Math.abs(dx)<=20 && Math.abs(dy)<=30 : Math.hypot(dx,dy)<=20;
+    if (hit) { selectedUpgradeTarget = c; updateUIButtons(); return; }
+  }
+  selectedUpgradeTarget = null;
+  updateUIButtons();
+});
+
+function drawHealthBar(x,y,w,h,hp,maxHp) {
+  ctx.fillStyle='black'; ctx.fillRect(x,y,w,h);
+  ctx.fillStyle='lime';  ctx.fillRect(x,y,w*(hp/maxHp),h);
+  ctx.strokeStyle='white'; ctx.strokeRect(x,y,w,h);
+}
+function drawEnemyStats(e) {
+  ctx.fillStyle='white'; ctx.font='12px Arial';
+  ctx.fillText(`HP:${Math.round(e.hp)}`, e.x-15, e.y-e.size-18);
+  ctx.fillText(`DMG:${e.damageToCell}`, e.x-15, e.y-e.size-6);
+}
+function drawElectricArc(x,y,ts) {
+  ctx.strokeStyle='yellow'; ctx.lineWidth=3;
+  ts.forEach(t=>{ ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(t.x,t.y); ctx.stroke(); });
+}
+
+let loopId;
+function loop() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // Placement preview
+  if (selectedCell && interWave) {
+    ctx.save(); ctx.globalAlpha=0.3;
+    const t = baseCellTypes[selectedCell];
+    ctx.fillStyle = selectedCell==='basic'?'cyan':selectedCell==='neuron'?'yellow':'#4caf50';
+    if (selectedCell==='plant') ctx.fillRect(mouseX-20,mouseY-30,40,60);
+    else ctx.beginPath(),ctx.arc(mouseX,mouseY,20,0,Math.PI*2),ctx.fill();
+    ctx.strokeStyle='white'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(mouseX,mouseY,t.range,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+  // Draw lanes
+  ctx.strokeStyle='#0f0'; ctx.lineWidth=3;
+  lines.forEach(y=>{ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(800,y);ctx.stroke();});
+  // Draw cells
+  cells.forEach(c=>{
+    if(c.type==='plant') ctx.fillStyle='#4caf50',ctx.fillRect(c.x-c.width/2,c.y-c.height/2,c.width,c.height);
+    else ctx.fillStyle=c.type==='basic'?'cyan':'yellow',ctx.beginPath(),ctx.arc(c.x,c.y,20,0,Math.PI*2),ctx.fill();
+    // Level always show
+    ctx.fillStyle='white'; ctx.font='12px Arial'; ctx.fillText(`Lv.${c.upgrade||0}`,c.x-12,c.y+30);
+    // Range highlight
+    if(c===selectedUpgradeTarget && interWave) {
+      ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(c.x,c.y,c.range,0,Math.PI*2);ctx.stroke();
+      ctx.save();ctx.strokeStyle='red';ctx.lineWidth=3;
+      if(c.type==='plant') ctx.strokeRect(c.x-c.width/2-4,c.y-c.height/2-4,c.width+8,c.height+8);
+      else ctx.beginPath(),ctx.arc(c.x,c.y,26,0,Math.PI*2),ctx.stroke();
+      ctx.restore();
+    }
+  });
+
+  cells.forEach(cell=>{
+    if(cell.type==='plant') return;
+    if(cell.cooldown>0){ cell.cooldown--; return; }
+    const type = baseCellTypes[cell.type];
+    if(cell.type==='basic'){
+      let target=null, minD=Infinity;
+      enemies.forEach(e=>{
+        const d=Math.hypot(e.x-cell.x,e.y-cell.y);
+        if(d<=cell.range && d<minD){ minD=d; target=e; }
+      });
+      if(target){
+        projectiles.push({x:cell.x,y:cell.y,target,damage:cell.damage,speed:type.projectileSpeed});
+        cell.cooldown = type.cooldownMax;
+      }
+    } else if(cell.type==='neuron'){
+      const hits = enemies.filter(e=>Math.hypot(e.x-cell.x,e.y-cell.y)<=cell.range);
+      if(hits.length){
+        hits.forEach(e=>e.hp-=cell.damage);
+        cell.arcTargets=hits; cell.cooldown=type.cooldownMax;
+      }
+    }
+  });
+
+  enemies.forEach(e=>{
+    if(!e.blocked) e.speedCurrent=e.speed;
+    else{
+      e.blockTimer--; if(e.blockTimer<=0){ e.blocked=false; e.speedCurrent=e.speed; }
+    }
+    let blockedNow=false;
+    for(const cell of cells){
+      const dx=Math.abs(e.x-cell.x), dy=Math.abs(e.y-cell.y);
+      if(cell.type==='plant' && dx<=(cell.width/2+e.size) && dy<=(cell.height/2+e.size*0.6)){
+        e.blocked=true; e.blockTimer=30; e.speedCurrent=0;
+        cell.hp-=e.damageToCell;
+        if(cell.hp<=0) cells.splice(cells.indexOf(cell),1);
+        blockedNow=true;
+      } else if(cell.type!=='plant' && Math.hypot(dx,dy)<25){
+        cell.hp-=e.damageToCell;
+        if(cell.hp<=0) cells.splice(cells.indexOf(cell),1);
+      }
+    }
+    if(!blockedNow) e.x += e.speedCurrent||e.speed;
+    ctx.fillStyle=e.color;
+    ctx.beginPath(); ctx.ellipse(e.x,e.y,e.size,e.size*0.6,0,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='black'; ctx.stroke();
+    drawHealthBar(e.x-e.size, e.y-e.size-10, e.size*2,6, e.hp, e.maxHp);
+    drawEnemyStats(e);
+  });
+
+  for(let i=projectiles.length-1;i>=0;i--){
+    const p=projectiles[i];
+    if(!p.target||p.target.hp<=0){ projectiles.splice(i,1); continue; }
+    const dx=p.target.x-p.x, dy=p.target.y-p.y, d=Math.hypot(dx,dy);
+    if(d<p.speed){
+      p.target.hp-=p.damage; projectiles.splice(i,1);
+    } else {
+      p.x+=(dx/d)*p.speed; p.y+=(dy/d)*p.speed;
+      ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2); ctx.fill();
+    }
+  }
+  cells.forEach(cell=>{
+    if(cell.type==='neuron'&&cell.arcTargets&&cell.cooldown>0) drawElectricArc(cell.x,cell.y,cell.arcTargets);
+  });
+
+  for(let i=enemies.length-1;i>=0;i--){
+    if(enemies[i].hp<=0){ enemies.splice(i,1); score+=10; }
+    else if(enemies[i].x>800){
+      health--; healthDisplay.textContent=health;
+      enemies.splice(i,1);
+      if(health<=0){ showWaveBanner('게임 종료!'); return; }
+    }
+  }
+
+  updateUIButtons();
+  loopId = requestAnimationFrame(loop);
+}
+
+setInterval(() => {
+  ATP += Math.floor(cells.length * 3);
+  atpDisplay.textContent = ATP;
+  updateUIButtons();
+}, 1000);
+
+interWave = true;
+updateUIButtons();
+waveDisplay.textContent = wave;
+scoreDisplay.textContent = `Score: ${score}`;
+
+loop();
   </script>
 </body>
 </html>
