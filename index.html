@@ -138,6 +138,7 @@ let selectedCell = null;
 let selectedUpgradeTarget = null;
 let mouseX = 0, mouseY = 0;
 let score = 0;
+let firstWave = true;
 let highScore = parseInt(localStorage.getItem('gdh_highScore')) || 0;
 highScoreDisplay.textContent = highScore;
 
@@ -147,9 +148,9 @@ const enemies = [];
 const projectiles = [];
 
 const baseCellTypes = {
-  basic:  { damage:5, range:60, cooldownMax:50, cost:50, projectileSpeed:8 },
-  neuron: { damage:3, range:100, cooldownMax:120, cost:80 },
-  plant:  { hp:150, cost:60 }
+  basic:  { damage:9, range:60, cooldownMax:50, cost:50, projectileSpeed:8 },
+  neuron: { damage:6, range:100, cooldownMax:120, cost:80 },
+  plant:  { hp:200, cost:60 }
 };
 const enemyTypes = [
   { hp:30, speed:1.0, color:'#d22', size:20 },
@@ -227,6 +228,13 @@ upgradeBtn.onclick = () => {
 };
 
 startBtn.onclick = () => {
+  if (interWave) {
+    if (!firstWave) {
+      wave++;
+    } else {
+      firstWave = false;
+    }
+  }
   interWave = false;
   waveInProgress = true;
   updateUIButtons();
@@ -406,7 +414,12 @@ function loop() {
     else if(enemies[i].x>800){
       health--; healthDisplay.textContent=health;
       enemies.splice(i,1);
-      if(health<=0){ showWaveBanner('게임 종료!'); return; }
+      if(health<=0){
+        showWaveBanner('게임 종료!');
+        setTimeout(() => {
+          location.href = 'end.html';
+        },1500)
+        return; }
     }
   }
 
