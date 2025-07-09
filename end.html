@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Cell Defense - 결과</n  <style>
+    body { margin: 0; background: #222; color: #eee; font-family: Arial; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+    .box { background: #333; border: 2px solid #0f0; border-radius: 8px; padding: 40px; text-align: center; }
+    h1 { color: #0f0; margin-bottom: 20px; }
+    p { font-size: 24px; margin: 10px 0; }
+    button { margin-top: 20px; background: #0f0; color: #000; border: none; padding: 10px 20px; border-radius: 4px; font-size: 18px; cursor: pointer; }
+    button:hover { background: #0c0; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>게임 오버</h1>
+    <p>최종 점수: <span id="finalScore">0</span></p>
+    <p>최고 기록: <span id="bestScore">0</span></p>
+    <button id="retryBtn">다시 하기</button>
+  </div>
+  <script>
+    // URL에서 score 파라미터 읽기
+    function getQueryParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    }
+    const finalScore = parseInt(getQueryParam('score')) || 0;
+    // 최고 기록 가져오기
+    const best = localStorage.getItem('gdh_highScore') || 0;
+    document.getElementById('finalScore').textContent = finalScore;
+    document.getElementById('bestScore').textContent = best;
+    // 다시 하기 버튼
+    document.getElementById('retryBtn').onclick = () => {
+      window.location.href = 'tutorial.html';
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Cell Defense 튜토리얼</title>
+  <style>
+    /* Pixel Lab Theme Styles */
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #2a2a2a;
+      /* Minecraft-like block grid for lab floor */
+      background-image:
+        linear-gradient(rgba(58,58,58,0.8) 2px, transparent 2px),
+        linear-gradient(90deg, rgba(58,58,58,0.8) 2px, transparent 2px);
+      background-size: 32px 32px;
+      image-rendering: pixelated;
+      color: #eee;
+      font-family: 'Press Start 2P', monospace;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px 0;
+      transition: opacity 0.5s ease;
+    }
+    body.fade-out {
+      opacity: 0;
+    }
+    .container {
+      width: 800px;
+      background-color: #1a1a1a;
+      border: 8px solid #4a8;
+      box-shadow: inset 0 0 0 4px #030;
+      padding: 24px;
+      box-sizing: border-box;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    h1 {
+      margin: 0 0 20px;
+      font-size: 32px;
+      text-align: center;
+      color: #4a8;
+      text-shadow: 2px 2px 0 #030;
+    }
+    .step {
+      background-color: #0f0f0f;
+      border: 4px solid #4a8;
+      margin-bottom: 20px;
+      padding: 16px;
+    }
+    .step h2 {
+      font-size: 20px;
+      margin: 0 0 12px;
+      position: relative;
+      padding-left: 28px;
+      color: #4a8;
+    }
+    .step h2::before {
+      content: '🧪';
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: 18px;
+      animation: blink 1s steps(1) infinite;
+    }
+    p, ul, ol {
+      margin: 0 0 12px;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    ul, ol {
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 6px;
+    }
+    img {
+      image-rendering: pixelated;
+      border: 2px solid #4a8;
+      display: block;
+      margin: 8px auto;
+    }
+    button#startGame {
+      display: block;
+      margin: 20px auto;
+      background-color: #4a8;
+      color: #000;
+      border: 4px solid #030;
+      padding: 12px 24px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 14px;
+      cursor: pointer;
+      image-rendering: pixelated;
+    }
+    button#startGame:hover {
+      background-color: #6af;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🛡️ Cell Defense 튜토리얼</h1>
+
+    <div class="step">
+      <h2>1. 게임 소개</h2>
+      <p>Cell Defense는 픽셀 그래픽의 실험실 테마를 접목한 웨이브 디펜스 게임입니다.</p>
+      <ul>
+        <li>ATP: 세포 설치 및 업그레이드 자원</li>
+        <li>Health: 적이 기지를 관통하면 감소 (0 되면 GAME OVER)</li>
+        <li>Wave: 단계가 올라갈수록 적 강화 및 수 증가</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h2>2. 세포 종류</h2>
+      <p>실험실 장비처럼 활용되는 3가지 세포:</p>
+      <ul>
+        <li><strong>기본 세포</strong>: 단일 적 집중 공격</li>
+        <img src="images/cell.png" alt="Basic Cell" width="64" height="64">
+        <li><strong>뉴런 세포</strong>: 범위 내 다수 적 일제 공격</li>
+        <img src="images/new.png" alt="Neuron Cell" width="64" height="64">
+        <li><strong>식물 세포</strong>: 적 경로 차단 및 체력 보유</li>
+        <img src="images/plant.png" alt="Plant Cell" width="64" height="96">
+      </ul>
+    </div>
+
+    <div class="step">
+      <h2>3. 세포 설치</h2>
+      <ol>
+        <li>상단 UI에서 세포 버튼을 선택합니다.</li>
+        <li>설치 위치에 마우스를 가져가 반투명 미리보기를 확인합니다.</li>
+        <li>클릭하여 설치를 완료합니다.</li>
+      </ol>
+    </div>
+
+    <div class="step">
+      <h2>4. 세포 업그레이드</h2>
+      <ol>
+        <li>설치된 세포를 클릭하여 선택합니다.</li>
+        <li>업그레이드 버튼을 클릭하여 세포를 강화합니다 (50 ATP 소모).</li>
+      </ol>
+    </div>
+
+    <div class="step">
+      <h2>5. 웨이브 진행</h2>
+      <ol>
+        <li>다음 웨이브 버튼을 클릭하여 다음 라운드를 시작합니다.</li>
+        <li>웨이브 시작 시 100 ATP 보너스를 획득합니다.</li>
+        <li>적 처치 시 20 ATP를 획득합니다.</li>
+        <li>적이 오른쪽 경계선을 통과하면 Health가 감소합니다.</li>
+      </ol>
+    </div>
+
+    <div class="step">
+      <h2>6. 게임 종료</h2>
+      <p>Health가 0이 되면 결과 페이지(<code style="color:#ff6; font-family:'Press Start 2P'">result.html?score=점수</code>)로 이동합니다.</p>
+    </div>
+
+    <button id="startGame">게임 시작</button>
+  </div>
+
+  <script>
+    document.getElementById('startGame').onclick = () => {
+      document.body.classList.add('fade-out');
+      setTimeout(() => window.location.href = 'index.html', 500);
+    };
+  </script>
+</body>
+</html>
