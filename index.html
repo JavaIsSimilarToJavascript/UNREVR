@@ -267,6 +267,12 @@ const imgPlant = new Image();
 imgPlant.src = 'images/plant.png';
 const imgNeuron = new Image();
 imgNeuron.src = 'images/new.png';
+const superBacteriaFrames = [];
+for (let i = 0; i <= 3; i++) {
+  const img = new Image();
+  img.src = `images/superbacteria${i}.png`;
+  superBacteriaFrames.push(img);
+}
 
 // ↓ baseCellTypes 아래에 추가
 // 기존 cellDescriptions 대신 이걸로 교체하세요
@@ -299,9 +305,9 @@ const enemyDescriptions = {
 // 선택된 업그레이드 대상, 셀 배치 중, 적 클릭용
 let selectedEnemy = null;
 
-let ATP = 300;
+let ATP =5300;
 let health = 5;
-let wave = 0;
+let wave = 4;
 let enemiesToSpawn = 0;
 let enemiesSpawned = 0;
 let waveInProgress = false;
@@ -325,8 +331,8 @@ const enemies = [];
 const projectiles = [];
 
 const baseCellTypes = {
-  basic:  { damage:10, range:60, cooldownMax:50, cost:50, projectileSpeed:8 },
-  neuron: { damage:7, range:100, cooldownMax:120, cost:80 },
+  basic:  { damage:50, range:60, cooldownMax:50, cost:50, projectileSpeed:8 },
+  neuron: { damage:50, range:100, cooldownMax:120, cost:80 },
   plant:  { hp:500, cost:60 }
 };
 
@@ -336,6 +342,16 @@ const enemyTypes = [
   { type:'bacteria',hp:40, speed:0.9, color:'#ff6', size:25 }
 ];
 
+
+function getCellDisplayName(cell) {
+  if (cell.type === 'basic' && cell.upgrade >= 5) return '백혈구';
+  if (cell.type === 'neuron' && cell.upgrade >= 5) return '시냅스 뉴런';
+  if (cell.type === 'plant' && cell.upgrade >= 5) return '점액 세포벽';
+  if (cell.type === 'basic') return '기본 세포';
+  if (cell.type === 'neuron') return '뉴런';
+  if (cell.type === 'plant') return '세포벽';
+  return '';
+}
 
 function updateUIButtons() {
 const bCost = getPlacementCost('basic');
@@ -558,54 +574,62 @@ document.getElementById('infoUpgradeBtn').onclick = () => {
 }
 
 
-
 function spawnWave() {
   spawnDone = false;
   enemiesSpawned = 0;
-  // 기본 적 수
-  enemiesToSpawn = 5 + wave * 2;
-  // 5의 배수 웨이브에서만 2배
-  if (wave % 5 === 0) enemiesToSpawn = (5 + wave * 2) * 2;
+  // 5의 배수 웨이브면 보스 1마리 + 일반 적 (보스 포함 총 n+1마리)
+  if (wave % 5 === 0) {
+    enemiesToSpawn = 5 + wave * 2; // 일반 적 수
+    enemiesToSpawn += 1;           // 보스 1마리 추가
+  } else {
+    enemiesToSpawn = 5 + wave * 2;
+  }
   updateUIButtons();
   showWaveBanner(`Wave ${wave}`);
   spawnInterval = setInterval(spawnEnemy, Math.max(2000 - wave*150, 500));
-  if (wave % 5 === 0) {
-    const y = lines[Math.floor(Math.random() * lines.length)];
-  enemies.push({
-    type: wave===10 ? 'monster' : 'superVirus',
-    x:0, y,
-    hp: 200 + wave*20,
-    maxHp: 200 + wave*20,
-    speed: 0.8,
-    color: '#ff0',
-    size: 50,
-    damageToCell: 3 + Math.floor(wave/5),
-    blocked: false, blockTimer: 0
-    });
-  }
 }
 
 function spawnEnemy() {
-  if (enemiesSpawned++ >= enemiesToSpawn) {
+  if (enemiesSpawned >= enemiesToSpawn) {
     clearInterval(spawnInterval);
     waveInProgress = false;
     spawnDone = true;
     return;
   }
-  const base = enemyTypes[Math.floor(Math.random()*enemyTypes.length)];
-  const y = lines[Math.floor(Math.random()*lines.length)];
-  enemies.push({
-    type: base.type,
-    x:0, y,
-    hp: base.hp + wave*5,
-    maxHp: base.hp + wave*5,
-    speed: base.speed + wave*0.05,
-    color: base.color,
-    size: base.size,
-    damageToCell: 1 + Math.floor(wave/3),
-    blocked: false, blockTimer: 0
- });
+  // 5의 배수 웨이브, 마지막 적이면 보스 등장
+  if (wave % 5 === 0 && enemiesSpawned === enemiesToSpawn - 1) {
+    const y = lines[Math.floor(Math.random() * lines.length)];
+    enemies.push({
+      type: wave===10 ? 'monster' : 'superVirus',
+      x:0, y,
+      hp: 200 + wave*20,
+      maxHp: 200 + wave*20,
+      speed: 0.8,
+      color: '#ff0',
+      size: 50,
+      damageToCell: 3 + Math.floor(wave/5),
+      blocked: false, blockTimer: 0,
+      animFrame: 0,
+      animTick: 0
+    });
+  } else {
+    const base = enemyTypes[Math.floor(Math.random()*enemyTypes.length)];
+    const y = lines[Math.floor(Math.random()*lines.length)];
+    enemies.push({
+      type: base.type,
+      x:0, y,
+      hp: base.hp + wave*5,
+      maxHp: base.hp + wave*5,
+      speed: base.speed + wave*0.05,
+      color: base.color,
+      size: base.size,
+      damageToCell: 1 + Math.floor(wave/3),
+      blocked: false, blockTimer: 0
+    });
+  }
+  enemiesSpawned++;
 }
+
 
 // 설치 비용: 같은 타입 세포 개수에 비례해 +10%씩 상승
 function getPlacementCost(type) {
@@ -653,8 +677,13 @@ function showWaveBanner(txt) {
 
 function drawHealthBar(x,y,w,h,hp,mh) { ctx.fillStyle='black';ctx.fillRect(x,y,w,h);ctx.fillStyle='lime';ctx.fillRect(x,y,w*(hp/mh),h);ctx.strokeStyle='white';ctx.strokeRect(x,y,w,h); }
 function drawEnemyStats(e) { ctx.fillStyle='white';ctx.font='12px Arial';ctx.fillText(`HP:${Math.round(e.hp)}`,e.x-15,e.y-e.size-18);ctx.fillText(`DMG:${e.damageToCell}`,e.x-15,e.y-e.size-6); }
-function drawElectricArc(x,y,ts) { ctx.strokeStyle='yellow';ctx.lineWidth=3;ts.forEach(t=>{ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(t.x,t.y);ctx.stroke();}); }
-
+function drawElectricArc(x, y, ts, isBlue) {
+  ctx.strokeStyle = isBlue ? '#00f6ff' : 'yellow';
+  ctx.lineWidth=3;
+  ts.forEach(t=>{
+    ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(t.x,t.y); ctx.stroke();
+  });
+}
 function drawCellImage(cell) {
   if (cell.type === 'plant') {
     ctx.drawImage(imgPlant, cell.x - 20, cell.y - 30, 40, 60);
@@ -698,7 +727,7 @@ cells.forEach(cell => {
    // 1) 레벨 항상 표시 (Lv.0부터)
    ctx.fillStyle = 'white';
    ctx.font      = '12px Arial';
-   ctx.fillText(`Lv.${cell.upgrade}`, cell.x - 12, cell.y + 30);
+   ctx.fillText(getCellDisplayName(cell), cell.x - 20, cell.y - 35);
    // 2) 식물 세포 전용 HP 바
    if (cell.type === 'plant') {
      drawHealthBar(cell.x - 20, cell.y + 35, 40, 6, cell.hp, cell.maxHp);
@@ -731,29 +760,45 @@ cells.forEach(cell => {
     if(cell.type==='plant') return;
     if(cell.cooldown>0){ cell.cooldown--; return; }
     const type = baseCellTypes[cell.type];
-    if(cell.type==='basic'){
-      let target=null, minD=Infinity;
-      enemies.forEach(e=>{
-        const d=Math.hypot(e.x-cell.x,e.y-cell.y);
-        if(d<=cell.range && d<minD){ minD=d; target=e; }
-      });
-      if(target){
-        projectiles.push({x:cell.x,y:cell.y,target,damage:cell.damage,speed:type.projectileSpeed});
-        cell.cooldown = type.cooldownMax;
-      }
+if(cell.type==='basic'){
+  let target=null, minD=Infinity;
+  enemies.forEach(e=>{
+    const d=Math.hypot(e.x-cell.x,e.y-cell.y);
+    if(d<=cell.range && d<minD){ minD=d; target=e; }
+  });
+  if(target){
+    // 5레벨 이상이면 쿨타임 감소
+    cell.cooldown = cell.upgrade >= 5 ? 30 : type.cooldownMax;
+    projectiles.push({
+      x:cell.x, y:cell.y, target, damage:cell.damage, speed:type.projectileSpeed,
+      isWhiteBlood: cell.upgrade >= 5 // 백혈구화 여부
+    });
+  }
     } else if(cell.type==='neuron'){
-      const hits = enemies.filter(e=>Math.hypot(e.x-cell.x,e.y-cell.y)<=cell.range);
-      if(hits.length){
-        hits.forEach(e=>e.hp-=cell.damage);
-        cell.arcTargets=hits; cell.cooldown=type.cooldownMax;
-      }
-    }
+  const hits = enemies.filter(e=>Math.hypot(e.x-cell.x,e.y-cell.y)<=cell.range);
+  if(hits.length){
+    hits.forEach(e=>{
+      e.hp -= cell.damage;
+      // 5레벨 이상 감전 효과
+      if(cell.upgrade >= 5) e.stun = 20;
+    });
+    cell.arcTargets=hits; cell.cooldown=type.cooldownMax;
+    cell.isBlueArc = cell.upgrade >= 5;
+  }
+}
   });
 
 enemies.forEach(e => {
   // ── 1) 이동 속도 세팅 ──
-  const speed = e.speed;
-
+  let moveSpeed = e.speed;
+  if(e.stun && e.stun > 0) {
+    moveSpeed = 0;
+    e.stun--;
+  }
+  if(e.slow && e.slow > 0) {
+    moveSpeed *= 0.5;
+    e.slow--;
+  }
   // ── 2) 충돌 검사 ──
   let didCollide = false;
   for (const cell of cells) {
@@ -768,37 +813,44 @@ enemies.forEach(e => {
     ) {
       // 식물에 데미지
       cell.hp -= e.damageToCell;
-      if (cell.hp <= 0) cells.splice(cells.indexOf(cell), 1);
-      // 뒤로 튕겨 나가기: 한 프레임만큼 반대 방향 이동
-      e.x -= speed;
-      didCollide = true;
-      break;
-    }
 
-    // (2) 기본/뉴런 세포 충돌 → 피해만 주고 통과
-    if (
-      cell.type !== 'plant' &&
-      Math.hypot(dx, dy) < 25
-    ) {
-      cell.hp -= e.damageToCell;
-      if (cell.hp <= 0) cells.splice(cells.indexOf(cell), 1);
+      if (cell.hp <= 0) {
+        // 5레벨 이상이면 주변 적 슬로우
+        if (cell.upgrade >= 5) {
+          enemies.forEach(e2 => {
+            if (Math.hypot(e2.x - cell.x, e2.y - cell.y) < 60) e2.slow = 60;
+          });
+        }
+        cells.splice(cells.indexOf(cell), 1);
+      }
       didCollide = true;
-      break;
+      break; // 충돌 시 for문 탈출
     }
   }
-
   // ── 3) 충돌 없으면 앞으로 이동 ──
   if (!didCollide) {
-    e.x += speed;
+    e.x += moveSpeed;
   }
 
   // ── 4) 렌더링 & 강조 & HP바 ──
-  ctx.fillStyle = e.color;
-  ctx.beginPath();
-  ctx.ellipse(e.x, e.y, e.size, e.size * 0.6, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = 'black';
-  ctx.stroke();
+  if (e.type === 'superVirus') {
+    e.animTick = (e.animTick || 0) + 1;
+    if (e.animTick % 8 === 0) {
+      e.animFrame = ((e.animFrame || 0) + 1) % superBacteriaFrames.length;
+    }
+    ctx.drawImage(
+      superBacteriaFrames[e.animFrame || 0],
+      e.x - e.size, e.y - e.size,
+      e.size * 2, e.size * 2
+    );
+  } else {
+    ctx.fillStyle = e.color;
+    ctx.beginPath();
+    ctx.ellipse(e.x, e.y, e.size, e.size * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'black';
+    ctx.stroke();
+  }
 
   // 선택 강조
   if (e === selectedEnemy) {
@@ -813,24 +865,30 @@ enemies.forEach(e => {
 
   drawHealthBar(e.x - e.size, e.y - e.size - 10, e.size*2, 6, e.hp, e.maxHp);
   drawEnemyStats(e);
-});
+}); 
+
 
 
 
   // 투사체
-  for(let i=projectiles.length-1;i>=0;i--){
-    const p=projectiles[i];
-    if(!p.target||p.target.hp<=0){ projectiles.splice(i,1); continue; }
-    const dx=p.target.x-p.x, dy=p.target.y-p.y, d=Math.hypot(dx,dy);
-    if(d<p.speed){
-      p.target.hp-=p.damage; projectiles.splice(i,1);
-    } else {
-      p.x+=(dx/d)*p.speed; p.y+=(dy/d)*p.speed;
-      ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2); ctx.fill();
-    }
+for(let i=projectiles.length-1;i>=0;i--){
+  const p=projectiles[i];
+  if(!p.target||p.target.hp<=0){ projectiles.splice(i,1); continue; }
+  const dx=p.target.x-p.x, dy=p.target.y-p.y, d=Math.hypot(dx,dy);
+  if(d<p.speed){
+    p.target.hp-=p.damage;
+    // 백혈구화 슬로우 효과
+    if(p.isWhiteBlood && Math.random()<0.3) p.target.slow = 40;
+    projectiles.splice(i,1);
+  } else {
+    p.x+=(dx/d)*p.speed; p.y+=(dy/d)*p.speed;
+    ctx.fillStyle = p.isWhiteBlood ? '#fff' : 'white';
+    ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2); ctx.fill();
   }
+}
   cells.forEach(cell=>{
-    if(cell.type==='neuron'&&cell.arcTargets&&cell.cooldown>0) drawElectricArc(cell.x,cell.y,cell.arcTargets);
+    if(cell.type==='neuron'&&cell.arcTargets&&cell.cooldown>0)
+      drawElectricArc(cell.x,cell.y,cell.arcTargets, cell.isBlueArc);
   });
 
   // 적 제거·체력 소진
