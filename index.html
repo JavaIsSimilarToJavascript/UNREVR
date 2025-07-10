@@ -255,6 +255,7 @@ infoPanel.addEventListener('click', e => {
     const cost = getUpgradeCost(cell);
     if (ATP < cost) return;
     ATP -= cost;
+    cell.spent += cost;
     cell.upgrade = (cell.upgrade || 0) + 1;
     if (cell.type === 'basic') {
       cell.damage += 2; cell.range  += 10;
@@ -268,9 +269,27 @@ infoPanel.addEventListener('click', e => {
     updateCellInfo();
   }
 
+ // 판매 버튼 클릭
+ // ▶ 판매 버튼
+  if (e.target.id === 'sellBtn') {
+    if (!selectedUpgradeTarget) return;
+    const cell = selectedUpgradeTarget;
+    const refund = Math.floor(cell.spent / 2);
+    ATP += refund;
+    // 셀 제거
+    cells.splice(cells.indexOf(cell), 1);
+    selectedUpgradeTarget = null;
+    updateUIButtons();
+    updateCellInfo();
+  }
+
   // 진화 버튼 클릭
   if (e.target.id === 'evolveBtn') {
     if (!selectedUpgradeTarget) return;
+    const evoCost = getEvolutionCost(selectedUpgradeTarget);
+    if (ATP < evoCost) return;
+    ATP -= evoCost;
+    selectedUpgradeTarget.spent += evoCost;
     const c = selectedUpgradeTarget;
     showEvolutionEffect(c);
     c.upgrade = 6;
@@ -393,22 +412,24 @@ function canEvolve(cell) {
 }
 
 function showEvolutionEffect(cell) {
-  // 간단한 원형 이펙트 (캔버스 위에)
-  const effectFrames = 30;
-  let frame = 0;
-  function effect() {
-    ctx.save();
-    ctx.globalAlpha = 1 - frame / effectFrames;
-    ctx.beginPath();
-    ctx.arc(cell.x, cell.y, 30 + frame * 2, 0, Math.PI * 2);
-    ctx.strokeStyle = '#fff700';
-    ctx.lineWidth = 4;
-    ctx.stroke();
-    ctx.restore();
-    frame++;
-    if (frame < effectFrames) requestAnimationFrame(effect);
-  }
-  effect();
+  const rings = [30, 40];           // 두 번 반짝일 반지 크기
+  rings.forEach((startR, idx) => {
+    const effectFrames = 30;
+    let frame = 0;
+    function effect() {
+      ctx.save();
+      ctx.globalAlpha = 1 - frame / effectFrames;
+      ctx.beginPath();
+      ctx.arc(cell.x, cell.y, startR + frame * 2, 0, Math.PI * 2);
+      ctx.strokeStyle = idx === 0 ? '#fff700' : '#00f6ff';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      ctx.restore();
+      frame++;
+      if (frame < effectFrames) requestAnimationFrame(effect);
+    }
+    setTimeout(effect, idx * 100); // 0ms, 100ms 뒤 두 번째 고리
+  });
 }
 
 function getCellDisplayName(cell) {
@@ -419,6 +440,12 @@ function getCellDisplayName(cell) {
   if (cell.type === 'neuron') return '뉴런';
   if (cell.type === 'plant') return '세포벽';
   return '';
+}
+
+function getEvolutionCost(cell) {
+  // 예: 마지막 업그레이드 비용의 2배
+  const lastUpgradeCost = getUpgradeCost(cell);
+  return lastUpgradeCost * 2;
 }
 
 function updateUIButtons() {
@@ -480,7 +507,8 @@ canvas.addEventListener('click', e => {
       maxHp: baseCellTypes[selectedCell].hp,  // Plant HP 바용
       damage: baseCellTypes[selectedCell].damage||0,
       range: baseCellTypes[selectedCell].range||0,
-      upgrade: 0
+      upgrade: 0,
+      spent : cost
     };
     if (selectedCell==='plant') { cell.width=40; cell.height=60; }
     cells.push(cell);
@@ -596,14 +624,16 @@ else /* plant */        { next.hp+=30; }
 const cost = getUpgradeCost(c);
 
 // 진화 버튼
-if (c.upgrade === 5) {
-  info.innerHTML = `
-    <div><strong>진화 ▶ ${evolveNames[type]}</strong></div>
-    <div class="description">${evolveDescs[type]}</div>
-    <button id="evolveBtn">진화!</button>
-  `;
-
-} else {
+  if (c.upgrade === 5) {
+    // 진화 비용 계산
+    const evoCost = getEvolutionCost(c);
+    info.innerHTML = `
+      <div><strong>진화 ▶ ${evolveNames[type]}</strong></div>
+      <div class="description">${evolveDescs[type]}</div>
+      <div>진화 비용: ${evoCost} ATP</div>
+      <button id="evolveBtn" ${ATP < evoCost ? 'disabled' : ''}>진화! (${evoCost})</button>
+    `;
+  } else {
   // 업그레이드 버튼
   info.innerHTML = `
     <div><strong>종류: ${c.upgrade >= 6 ? evolveNames[type] : names[type]}</strong></div>
@@ -614,6 +644,10 @@ if (c.upgrade === 5) {
     <button id="infoUpgradeBtn" ${ATP<cost||c.upgrade>=6?'disabled':''}>업그레이드 (${cost})</button>
   `;
 }
+   const sellRefund = Math.floor(c.spent / 2);
+   info.innerHTML += `
+     <button id="sellBtn">판매 (환불 ${sellRefund} ATP)</button>
+   `;
 }
 
 function spawnWave() {
@@ -851,7 +885,7 @@ if(cell.type==='basic'){
     hits.forEach(e=>{
       e.hp -= cell.damage;
       // 5레벨 이상 감전 효과
-      if(cell.upgrade >= 5) e.stun = 20;
+      if(cell.upgrade >= 5) e.stun = 10;
     });
     cell.arcTargets=hits; cell.cooldown=type.cooldownMax;
     cell.isBlueArc = cell.upgrade >= 5;
