@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <title>Cell Defense - 웨이브 모드</title>
   <style>
-    /* Pixel Lab Theme for Game Screen */
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
     body {
       margin: 0;
       padding: 0;
@@ -17,31 +17,92 @@
       font-family: 'Press Start 2P', monospace;
       color: #eee;
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      justify-content: center;
+      padding-top: 20px;
     }
-    #gameCanvas {
-      margin-top: 20px;
-      border: 8px solid #4a8;
-      box-shadow: inset 0 0 0 4px #030;
-      image-rendering: pixelated;
-    }
-    #ui {
-      width: 800px;
-      background-color: #1a1a1a;
-      border: 8px solid #4a8;
-      box-shadow: inset 0 0 0 4px #030;
-      margin: 20px 0;
+
+    .container {
+      /* 캔버스(800) + 사이드바 양쪽(200×2) + 컬럼 간격(12×2) = 1224px
+         여기에 padding(16×2) + border(8×2) 합 48px을 합쳐서 총 1272px */
+      width: 1272px;
+      box-sizing: border-box;
       padding: 16px;
+      border: 8px solid #4a8;
+      background-color: #1a1a1a;
+      box-shadow: inset 0 0 0 4px #030;
+    }
+
+    .content-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .sidebar {
+      width: 200px;           /* 160 → 200px로 넓힘 */
+      box-sizing: border-box;
+      padding: 12px;
+      background-color: #0f0f0f;
+      border: 4px solid #4a8;
+      box-shadow: inset 0 0 0 4px #030;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .sidebar h2 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: #4a8;
+      text-shadow: 1px 1px 0 #030;
+    }
+    .sidebar ul, .sidebar ol {
+      margin: 8px 0;
+      padding-left: 16px;
+    }
+    .sidebar hr {
+      border: none;
+      border-top: 1px solid #4a8;
+      margin: 8px 0;
+    }
+
+    .main {
+      flex: 1;                /* 중앙에 남은 공간을 전부 할당 */
+      display: flex;
+      flex-direction: column;
+      align-items: center;    /* 캔버스 등 중앙 정렬 */
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .header img {
+      width: 64px;
+      height: 64px;
+      image-rendering: pixelated;
+      border: 4px solid #4a8;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      color: #4a8;
+      text-shadow: 2px 2px 0 #030;
+    }
+
+    #ui {
+      width: 800px;           /* 캔버스 너비와 맞춰서 중앙 고정 */
+      background-color: #0f0f0f;
+      border: 4px solid #4a8;
+      box-shadow: inset 0 0 0 4px #030;
+      margin-bottom: 20px;
+      padding: 12px;
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 12px;
-      box-sizing: border-box;
     }
-    #ui > div {
+    #ui > div, #ui span {
       font-size: 12px;
-      color: #eee;
       display: flex;
       align-items: center;
       gap: 4px;
@@ -64,29 +125,36 @@
       border-color: #555;
       cursor: default;
     }
+
+    .game-area {
+      position: relative;
+      width: 800px;           /* 캔버스 고정 폭 */
+    }
+    #gameCanvas {
+      display: block;
+      width: 800px;
+      height: 600px;
+      border: 8px solid #4a8;
+      box-shadow: inset 0 0 0 4px #030;
+      image-rendering: pixelated;
+    }
     #waveBanner {
       position: absolute;
       top: 20px;
+      width: 100%;
       font-size: 32px;
       color: #4a8;
       text-shadow: 2px 2px 0 #030;
-      width: 100%;
       text-align: center;
       opacity: 0;
       transition: opacity 0.5s;
       pointer-events: none;
     }
-    #score, #highScore {
-      font-size: 12px;
-      color: #eee;
-    }
-
-    /* cellInfo 스타일 추가 */
     #cellInfo {
       position: absolute;
-      bottom: 8px;        /* 캔버스 아래쪽에서 8px 띄우기 */
-      right: 8px;         /* 캔버스 오른쪽에서 8px 띄우기 */
-      width: 200px;       /* 원하시는 크기로 조정 가능 */
+      bottom: 8px;
+      right: 8px;
+      width: 200px;
       padding: 8px;
       background: rgba(17,17,17,0.9);
       border: 2px solid #4a8;
@@ -118,24 +186,64 @@
   </style>
 </head>
 <body>
-  <div id="ui">
-    <div>ATP: <span id="atp">200</span></div>
-    <div>체력: <span id="health">5</span></div>
-    <div>웨이브: <span id="wave">1</span></div>
-    <button id="basicBtn">기본세포(50)</button>
-    <button id="neuronBtn">뉴런(80)</button>
-    <button id="plantBtn">식물세포(60)</button>
-    <button id="upgradeBtn">업그레이드(50)</button>
-    <button id="startBtn">다음 웨이브</button>
-    <span id="timer"></span>
-    <span id="score">Score: 0</span>
-    <span id="highScore">HighScore: 0</span>
+  <div class="container">
+    <div class="content-row">
+
+      <!-- 왼쪽 사이드바 -->
+      <aside class="sidebar left">
+        <h2>세포 가이드</h2>
+        <ul>
+          <li>기본 세포: 단일 타겟 집중 공격</li>
+          <li>뉴런 세포: 범위 내 전격 공격</li>
+          <li>식물 세포: 경로 차단·방어장 생성</li>
+        </ul>
+      </aside>
+
+      <!-- 중앙 메인 영역 -->
+      <main class="main">
+        <div class="header">
+          <img src="images/Unrevr.png" alt="UNREVR 로고">
+          <h1>Cell Defense - 웨이브 모드</h1>
+        </div>
+
+        <div id="ui">
+          <div>ATP: <span id="atp">200</span></div>
+          <div>체력: <span id="health">5</span></div>
+          <div>웨이브: <span id="wave">1</span></div>
+          <button id="basicBtn">기본세포(50)</button>
+          <button id="neuronBtn">뉴런(80)</button>
+          <button id="plantBtn">식물세포(60)</button>
+          <button id="upgradeBtn">업그레이드(50)</button>
+          <button id="startBtn">다음 웨이브</button>
+          <span id="timer"></span>
+          <span id="score">Score: 0</span>
+          <span id="highScore">HighScore: 0</span>
+        </div>
+
+        <div class="game-area">
+          <canvas id="gameCanvas" width="800" height="600"></canvas>
+          <div id="waveBanner"></div>
+          <div id="cellInfo"></div>
+        </div>
+      </main>
+
+      <!-- 오른쪽 사이드바 -->
+      <aside class="sidebar right">
+        <h2>웨이브 정보</h2>
+        <div>현재 웨이브: <span id="wave">1</span></div>
+        <div>다음 보스: 슈퍼 바이러스</div>
+        <hr>
+        <h2>리더보드</h2>
+        <ol id="leaderboard">
+          <li>플레이어1 – 1200</li>
+          <li>플레이어2 – 950</li>
+          <li>플레이어3 – 730</li>
+        </ol>
+      </aside>
+
+    </div>
   </div>
-  <div style="position:relative;">
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <div id="waveBanner"></div>
-    <div id="cellInfo"></div>
-  </div>
+
   <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
