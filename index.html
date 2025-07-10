@@ -6,6 +6,23 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
+    @keyframes bgGreenGlow {
+    0% { background-position: 0 0, 0 0, 0 0; }
+    50% { background-position: 30px 30px, 20px 20px, -20px -20px; }
+    100% { background-position: 0 0, 0 0, 0 0; }
+  }
+
+
+    @keyframes bgFloat {
+    0%   { background-position: 0 0, 0 0, 0 0; }
+    50%  { background-position: 40px 60px, -30px -50px, 20px 40px; }
+    100% { background-position: 0 0, 0 0, 0 0; }
+  }
+
+
+
+
+
     body {
       margin: 0;
       padding: 0;
@@ -245,6 +262,86 @@
 
   <script>
 
+const selectedMap = localStorage.getItem('selectedMap') || 'lab';
+const mapConfigs = {
+  lab: {
+    lines: [200, 400],
+    style: {
+      backgroundColor: '#2a2a2a',
+      backgroundImage: `
+        linear-gradient(rgba(58,58,58,0.8) 2px, transparent 2px),
+        linear-gradient(90deg, rgba(58,58,58,0.8) 2px, transparent 2px)
+      `,
+      backgroundSize: '32px 32px',
+      animation: ''
+    },
+    gimmick: {
+      name: "기본 실험실",
+      description: "기본 밸런스 맵. 추가 효과 없음"
+    }
+  },
+  greenhouse: {
+    lines: [150, 300, 450],
+    style: {
+      backgroundColor: '#1b2e1b',
+      backgroundImage: `
+        radial-gradient(circle, rgba(144,238,144,0.15) 2px, transparent 2px),
+        linear-gradient(135deg, rgba(50,120,50,0.1) 25%, transparent 25%),
+        linear-gradient(225deg, rgba(50,120,50,0.1) 25%, transparent 25%)
+      `,
+      backgroundSize: '60px 60px',
+      animation: 'bgGreenGlow 20s linear infinite'
+    },
+    gimmick: {
+      name: "온실",
+      description: "식물세포 강화: HP +30%, 방어범위 +20%",
+      plantHpMultiplier: 1.3,
+      plantRangeBonus: 1.2,
+      upgradeDiscount: 0.9
+    }
+  },
+  cytosol: {
+    lines: [250, 350],
+    style: {
+      backgroundColor: '#0f1a2a',
+      backgroundImage: `
+        radial-gradient(circle, rgba(173,216,230,0.15) 3px, transparent 3px),
+        radial-gradient(circle, rgba(0,255,255,0.1) 2px, transparent 2px),
+        linear-gradient(90deg, rgba(0,128,255,0.05) 1px, transparent 1px)
+      `,
+      backgroundSize: '80px 80px, 40px 40px, 100px 100px',
+      animation: 'bgFloat 25s ease-in-out infinite'
+    },
+    gimmick: {
+      name: "세포질",
+      description: "적 속도 증가, 뉴런 스턴 효과 약화, 기본 세포 사거리 증가",
+      enemySpeedMultiplier: 1.1,
+      neuronStunResistance: true,
+      basicRangeBonus: 1.1
+    }
+  }
+};
+
+  const mapConfig = mapConfigs[selectedMap] || mapConfigs.lab;
+
+    // 배경 이미지 객체
+  const bgImg = new Image();
+  bgImg.src = mapConfig.backgroundSrc;
+
+  // 가이드 라인 위치 override
+  const lines = mapConfig.lines;
+
+const style = mapConfig.style;
+Object.assign(document.body.style, {
+  backgroundColor: style.backgroundColor,
+  backgroundImage: style.backgroundImage,
+  backgroundSize: style.backgroundSize,
+  animation: style.animation
+});
+
+
+
+
 // 스크립트 최상단, 혹은 초기화 부분에 한 번만 추가
 const infoPanel = document.getElementById('cellInfo');
 infoPanel.addEventListener('click', e => {
@@ -386,7 +483,6 @@ let waveStartLock = false;
 let highScore = parseInt(localStorage.getItem('gdh_highScore')) || 0;
 highScoreDisplay.textContent = highScore;
 
-const lines = [200, 400];
 const cells = [];
 const enemies = [];
 const projectiles = [];
@@ -497,24 +593,38 @@ canvas.addEventListener('click', e => {
   if (selectedCell) {
     const cost = getPlacementCost(selectedCell);
     if (ATP < cost) return;
-    if (selectedCell==='plant' && !lines.some(L=>Math.abs(y-L)<=20)) return;
-    if (selectedCell!=='plant' && lines.some(L=>Math.abs(y-L)<=20)) return;
-    const cell = {
+    
+      const cell = {
       x, y,
       type: selectedCell,
       cooldown: 0,
       hp: baseCellTypes[selectedCell].hp,
-      maxHp: baseCellTypes[selectedCell].hp,  // Plant HP 바용
-      damage: baseCellTypes[selectedCell].damage||0,
-      range: baseCellTypes[selectedCell].range||0,
+      maxHp: baseCellTypes[selectedCell].hp,
+      damage: baseCellTypes[selectedCell].damage || 0,
+      range: baseCellTypes[selectedCell].range || 0,
       upgrade: 0,
-      spent : cost
+      spent: cost
     };
-    if (selectedCell==='plant') { cell.width=40; cell.height=60; }
+
+    // 🔽 여기에 gimmick 적용 코드를 추가합니다 🔽
+    const gimmick = mapConfig.gimmick || {};
+    if (cell.type === 'plant') {
+      if (gimmick.plantHpMultiplier) {
+        cell.hp *= gimmick.plantHpMultiplier;
+        cell.maxHp *= gimmick.plantHpMultiplier;
+      }
+      if (gimmick.plantRangeBonus) {
+        cell.range *= gimmick.plantRangeBonus;
+      }
+    }
+    if (cell.type === 'basic' && gimmick.basicRangeBonus) {
+      cell.range *= gimmick.basicRangeBonus;
+    }
+
+    // 배열에 추가
     cells.push(cell);
     ATP -= cost;
     selectedCell = null;
-    [basicBtn, neuronBtn, plantBtn].forEach(b=>b.style.background='#0f0');
     updateUIButtons();
     updateCellInfo();
     return;
@@ -675,7 +785,7 @@ function spawnEnemy() {
   // 5의 배수 웨이브, 마지막 적이면 보스 등장
   if (wave % 5 === 0 && enemiesSpawned === enemiesToSpawn - 1) {
     const y = lines[Math.floor(Math.random() * lines.length)];
-    enemies.push({
+    const enemy = {
       type: wave===10 ? 'monster' : 'superVirus',
       x:0, y,
       hp: 200 + wave*20,
@@ -687,7 +797,14 @@ function spawnEnemy() {
       blocked: false, blockTimer: 0,
       animFrame: 0,
       animTick: 0
-    });
+    };
+    
+  if (mapConfig.gimmick?.enemySpeedMultiplier) {
+    enemy.speed *= mapConfig.gimmick.enemySpeedMultiplier;
+  }
+
+  enemies.push(enemy);
+
   } else {
     const base = enemyTypes[Math.floor(Math.random()*enemyTypes.length)];
     const y = lines[Math.floor(Math.random()*lines.length)];
@@ -711,15 +828,29 @@ function spawnEnemy() {
 function getPlacementCost(type) {
   const base = baseCellTypes[type].cost;
   const count = cells.filter(c => c.type === type).length;
-  return Math.max( Math.floor(base * (1 + count * 0.1)), base );
+  let cost = Math.max(Math.floor(base * (1 + count * 0.1)), base);
+
+  if (mapConfig.gimmick?.upgradeDiscount) {
+    cost = Math.floor(cost * mapConfig.gimmick.upgradeDiscount);
+  }
+
+  return cost;
 }
+
 
 // 업그레이드 비용: 레벨에 비례해 +50%씩 상승
 function getUpgradeCost(cell) {
   const base = 50;
   const lvl  = cell.upgrade || 0;
-  return Math.floor(base * (1 + lvl * 0.5));
+  let cost = Math.floor(base * (1 + lvl * 0.5));
+
+  if (mapConfig.gimmick?.upgradeDiscount) {
+    cost = Math.floor(cost * mapConfig.gimmick.upgradeDiscount);
+  }
+
+  return cost;
 }
+
 
 
 function startInterWave() {
@@ -774,6 +905,18 @@ function loop() {
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0,0,800,600);
   ctx.globalAlpha = 1;
+
+  ctx.save();
+  ctx.strokeStyle = '#4a8';
+  ctx.lineWidth   = 2;
+  lines.forEach(y => {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  });
+  ctx.restore();
+
 
   if (selectedCell) {
    ctx.save();
@@ -880,12 +1023,15 @@ if(cell.type==='basic'){
     });
   }
     } else if(cell.type==='neuron'){
-  const hits = enemies.filter(e=>Math.hypot(e.x-cell.x,e.y-cell.y)<=cell.range);
-  if(hits.length){
-    hits.forEach(e=>{
+} else if (cell.type === 'neuron') {
+  const hits = enemies.filter(e => Math.hypot(e.x-cell.x, e.y-cell.y) <= cell.range);
+  if (hits.length) {
+    hits.forEach(e => {
       e.hp -= cell.damage;
-      // 5레벨 이상 감전 효과
-      if(cell.upgrade >= 5) e.stun = 10;
+      // 스턴 조건 분기
+      if (!mapConfig.gimmick?.neuronStunResistance && cell.upgrade >= 5) {
+        e.stun = 10;
+      }
     });
     cell.arcTargets=hits; cell.cooldown=type.cooldownMax;
     cell.isBlueArc = cell.upgrade >= 5;
@@ -921,11 +1067,15 @@ enemies.forEach(e => {
 
       if (cell.hp <= 0) {
         // 5레벨 이상이면 주변 적 슬로우
-        if (cell.upgrade >= 5) {
+        const slowRadius = cell.range || 60;
+        if (cell.hp <= 0 && cell.upgrade >= 5) {
           enemies.forEach(e2 => {
-            if (Math.hypot(e2.x - cell.x, e2.y - cell.y) < 60) e2.slow = 60;
+            if (Math.hypot(e2.x - cell.x, e2.y - cell.y) < slowRadius) {
+              e2.slow = 60;
+            }
           });
         }
+
         cells.splice(cells.indexOf(cell), 1);
       }
       didCollide = true;
@@ -1022,7 +1172,14 @@ for(let i=projectiles.length-1;i>=0;i--){
       enemies.splice(i, 1);
       if (health <= 0) {
         showWaveBanner('게임 종료!');
-        setTimeout(() => location.href = 'end.html', 1500);
+        setTimeout(() => {
+          const playerData = {
+            score,
+            username: localStorage.getItem('gdh_username'),
+            realname: localStorage.getItem('gdh_realname')
+          };
+          location.href = 'hall.html?player=' + encodeURIComponent(JSON.stringify(playerData));
+        });
         return;
       }
     }

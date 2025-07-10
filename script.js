@@ -1,3 +1,5 @@
+
+
 // === 전체 수정된 JavaScript 코드 ===
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -34,6 +36,8 @@ const enemyTypes = [
   { hp: 45, speed: 0.7, color: '#720072', size: 30 },
   { hp: 35, speed: 0.9, color: '#ff6', size: 25 }
 ];
+
+
 
 function updateUIButtons() {
   basicBtn.disabled = ATP < 50;
