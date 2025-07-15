@@ -454,7 +454,7 @@ let selectedEnemy = null;
 
 let ATP = 40000;
 let health = 500;
-let wave = 13;
+let wave = 9;
 let enemiesToSpawn = 0;
 let enemiesSpawned = 0;
 let waveInProgress = false;
@@ -796,6 +796,28 @@ function spawnWave() {
     enemiesToSpawn = 5 + wave * 2;
   }
   updateUIButtons();
+
+  // --- 중간보스 경고 및 세포 제거 (10웨이브) ---
+  if (wave === 10) {
+    showWaveBanner('중간보스 등장!');
+    // 1초 후 중간보스 등장(연출)
+    setTimeout(() => {
+      // 세포 3개 랜덤 제거 (이펙트 적용)
+      if (cells.length > 0) {
+        const shuffled = cells.slice().sort(() => Math.random() - 0.5);
+        for (let i = 0; i < Math.min(3, shuffled.length); i++) {
+          const cell = shuffled[i];
+          cell.disappearEffect = 30; // 30프레임(0.5초) 이펙트
+        }
+        updateCellCount();
+        updateCellInfo();
+      }
+      // 실제 적 스폰 시작
+      spawnInterval = setInterval(spawnEnemy, Math.max(2000 - wave*150, 500));
+    }, 1000);
+    return; // 아래 spawnInterval은 실행하지 않음
+  }
+
   showWaveBanner(`Wave ${wave}`);
   spawnInterval = setInterval(spawnEnemy, Math.max(2000 - wave*150, 500));
 }
@@ -810,15 +832,22 @@ function spawnEnemy() {
   // 5의 배수 웨이브, 마지막 적이면 보스 등장
   if (wave % 5 === 0 && enemiesSpawned === enemiesToSpawn - 1) {
     const y = lines[Math.floor(Math.random() * lines.length)];
+    // 10웨이브 중간보스 특별 체력/공격력
+    let bossHp = 200 + wave * 20;
+    let bossDmg = 3 + Math.floor(wave/5);
+    if (wave === 10) {
+      bossHp = 850; // 중간보스 체력 강화
+      bossDmg = 10;  // 중간보스 공격력 강화
+    }
     const enemy = {
-      type: wave===10 ? 'monster' : 'superVirus',
+      type: wave===10 ? 'superVirus' : 'superVirus',
       x:0, y,
-      hp: 200 + wave*20,
-      maxHp: 200 + wave*20,
+      hp: bossHp,
+      maxHp: bossHp,
       speed: 0.8,
       color: '#ff0',
       size: 50,
-      damageToCell: 3 + Math.floor(wave/5),
+      damageToCell: bossDmg,
       blocked: false, blockTimer: 0,
       animFrame: 0,
       animTick: 0
@@ -926,6 +955,10 @@ function drawElectricArc(x, y, ts, isBlue) {
   });
 }
 function drawCellImage(cell) {
+  ctx.save();
+  if (cell.disappearEffect) {
+    ctx.globalAlpha = cell.disappearEffect / 30;
+  }
   // 진화 이미지 분기
   if (cell.type === 'plant') {
     if (cell.upgrade >= 6) {
@@ -946,6 +979,7 @@ function drawCellImage(cell) {
       ctx.drawImage(imgNeuron, cell.x - 20, cell.y - 20, 40, 40);
     }
   }
+  ctx.restore();
 }
 
 // 이미지 로드 부분에 진화 이미지 추가
@@ -957,6 +991,18 @@ const imgNeuronEvo = new Image();
 imgNeuronEvo.src = 'images/newevo.png';
 
 function loop() {
+  // disappearEffect 처리 및 세포 제거 (이펙트 끝난 세포만)
+  for (let i = cells.length - 1; i >= 0; i--) {
+    const cell = cells[i];
+    if (cell.disappearEffect) {
+      cell.disappearEffect--;
+      if (cell.disappearEffect <= 0) {
+        cells.splice(i, 1);
+        continue;
+      }
+    }
+  }
+
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0,0,800,600);
   ctx.globalAlpha = 1;
@@ -971,7 +1017,6 @@ function loop() {
     ctx.stroke();
   });
   ctx.restore();
-
 
   if (selectedCell) {
    ctx.save();
@@ -994,7 +1039,6 @@ function loop() {
    ctx.fillText('Lv.0', px, py - 16);
    ctx.restore();
  }
-
 
   // 1) 라인(가이드선) 표시
   ctx.save();
@@ -1135,7 +1179,7 @@ enemies.forEach(e => {
             }
           });
         }
-        cells.splice(cells.indexOf(cell), 1);
+        cell.disappearEffect = 30; // 죽은 세포 효과
       }
       // 적을 뒤로 밀기 (막힘 효과)
       e.x -= moveSpeed; // ← 이동을 취소(혹은 더 강하게 밀고 싶으면 *2 등)
