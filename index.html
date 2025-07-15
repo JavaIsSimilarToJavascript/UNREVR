@@ -476,7 +476,7 @@ const enemyDescriptions = {
 // 선택된 업그레이드 대상, 셀 배치 중, 적 클릭용
 let selectedEnemy = null;
 
-let ATP = 400;
+let ATP = 4000;
 let health = 5;
 let wave = 0;
 let enemiesToSpawn = 0;
@@ -802,7 +802,7 @@ const cost = getUpgradeCost(c);
     <div class="description">${c.upgrade >= 6 ? evolveDescs[type] : cellDescriptions[type]}</div>
     <div>공격력: ${curr.damage} → ${next.damage}</div>
     <div>사거리: ${curr.range} → ${next.range}</div>
-    ${type==='plant'?`<div>체력: ${curr.hp} → ${next.hp}</div>`:``}
+    ${type==='plant'?`<div>체력: ${curr.hp.toFixed(2)} → ${next.hp.toFixed(2)}</div>`:``}
     <button id="infoUpgradeBtn" ${ATP<cost||c.upgrade>=6?'disabled':''}>업그레이드 (${cost})</button>
   `;
 }
@@ -979,7 +979,7 @@ function showWaveBanner(txt) {
 }
 
 function drawHealthBar(x,y,w,h,hp,mh) { ctx.fillStyle='black';ctx.fillRect(x,y,w,h);ctx.fillStyle='lime';ctx.fillRect(x,y,w*(hp/mh),h);ctx.strokeStyle='white';ctx.strokeRect(x,y,w,h); }
-function drawEnemyStats(e) { ctx.fillStyle='white';ctx.font='12px Arial';ctx.fillText(`HP:${Math.round(e.hp)}`,e.x-15,e.y-e.size-18);ctx.fillText(`DMG:${e.damageToCell}`,e.x-15,e.y-e.size-6); }
+function drawEnemyStats(e) { ctx.fillStyle='white';ctx.font='12px Arial';ctx.fillText(`DMG:${e.damageToCell}`,e.x-15,e.y-e.size-6); }
 function drawElectricArc(x, y, ts, isBlue) {
   ctx.strokeStyle = isBlue ? '#00f6ff' : 'yellow';
   ctx.lineWidth=3;
@@ -1100,9 +1100,15 @@ function loop() {
     ctx.font = 'bold 12px Arial';
     ctx.fillText(`Lv.${cell.upgrade}`, cell.x, cell.y - 16);
 
-    // 식물 세포 HP 바
+    // 식물 세포 HP 바 (소수점 둘째자리까지)
     if (cell.type === 'plant') {
       drawHealthBar(cell.x - 20, cell.y + 35, 40, 6, cell.hp, cell.maxHp);
+      ctx.save();
+      ctx.fillStyle = '#fff';
+      ctx.font = '10px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${cell.hp.toFixed(2)} / ${cell.maxHp.toFixed(2)}`, cell.x, cell.y + 48);
+      ctx.restore();
     }
 
     // 선택 강조
@@ -1169,7 +1175,7 @@ function loop() {
       });
       cell.arcTargets = hits; // 쿨타임 동안 유지
       cell.cooldown = type.cooldownMax;
-      cell.isBlueArc = cell.upgrade >= 5;
+      cell.isBlueArc = cell.upgrade >= 6;
     } else {
       cell.arcTargets = null; // 맞은 적이 없으면 arcTargets 해제
     }
@@ -1311,6 +1317,13 @@ enemies.forEach(e => {
   }
 
   drawHealthBar(e.x - e.size, e.y - e.size - 10, e.size*2, 6, e.hp, e.maxHp);
+  // 체력 소수점 둘째자리까지 표시
+  ctx.save();
+  ctx.fillStyle = '#fff';
+  ctx.font = '10px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${e.hp.toFixed(2)} / ${e.maxHp.toFixed(2)}`, e.x, e.y - e.size - 14);
+  ctx.restore();
   drawEnemyStats(e);
 }); 
 
