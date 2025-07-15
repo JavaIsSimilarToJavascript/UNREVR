@@ -1,4 +1,3 @@
-<!-- roles.html (휘황찬란한 역할 소개) :contentReference[oaicite:6]{index=6} -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -6,104 +5,143 @@
   <title>Cell Defense – 역할 소개</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-    @keyframes bgShift {
-      0%   { background-position: 0 0, 0 0; }
-      50%  { background-position: 200px 200px, -200px -200px; }
-      100% { background-position: 0 0, 0 0; }
-    }
     body {
-      margin: 0; padding: 0;
+      margin: 0;
+      padding: 0;
       font-family: 'Press Start 2P', monospace;
-      color: #e0f7ea;
       background-color: #1a1a1a;
-      background-image:
-        radial-gradient(circle at 20% 20%, rgba(58,100,58,0.15) 2px, transparent 2px),
-        radial-gradient(circle at 80% 80%, rgba(58,100,58,0.15) 2px, transparent 2px);
-      background-size: 40px 40px, 40px 40px;
-      animation: bgShift 30s infinite linear;
+      background-image: radial-gradient(circle at 20% 20%, rgba(58, 100, 58, 0.2) 2px, transparent 2px), radial-gradient(circle at 80% 80%, rgba(58, 100, 58, 0.2) 2px, transparent 2px);
+      background-size: 40px 40px;
+      animation: bgMove 30s infinite linear;
       display: flex;
       align-items: center;
       justify-content: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    @keyframes bgMove {
+      0% { background-position: 0 0, 0 0; }
+      50% { background-position: 200px 200px, -200px -200px; }
+      100% { background-position: 0 0, 0 0; }
     }
     .container {
-      width: 750px;
+      width: 850px;
       padding: 40px 30px;
-      background: rgba(0,0,0,0.7);
+      background: rgba(0, 0, 0, 0.7);
       border: 4px solid #3a6;
-      box-shadow:
-        inset 0 0 8px #030,
-        0 0 12px rgba(58,100,58,0.6);
+      box-shadow: inset 0 0 8px #030, 0 0 12px rgba(58, 100, 58, 0.6);
       text-align: center;
+      position: relative;
+      overflow: hidden;
     }
     .logo img {
-      width: 100px; height: 100px;
+      width: 100px;
+      height: 100px;
       image-rendering: pixelated;
-      border: 3px solid #3a6;
-      box-shadow: 0 0 8px rgba(58,100,58,0.7);
       margin-bottom: 20px;
     }
     h1 {
-      margin: 0 0 16px;
-      font-size: 40px;
+      font-size: 32px;
       color: #80ffb3;
-      text-shadow: 1px 1px 2px #030, 0 0 4px rgba(58,100,58,0.6);
+      text-shadow: 1px 1px 2px #030, 0 0 4px rgba(58, 100, 58, 0.6);
+      margin-bottom: 20px;
     }
-    .section { margin: 24px 0; text-align: left; }
-    .section h2 {
-      font-size: 24px; color: #a0e8c0;
-      margin-bottom: 12px; text-shadow: 1px 1px 0 #030;
+    .slider-section {
+      margin: 30px 0;
     }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
+    .slider-section h2 {
+      font-size: 16px;
+      color: #a0e8c0;
+      margin-bottom: 16px;
+      text-align: left;
+      padding-left: 10px;
+      border-left: 4px solid #3a6;
+    }
+    .slider {
+      position: relative;
+      overflow: visible;
+    }
+    .slide-track {
+      display: flex;
+      transition: transform 0.4s ease-in-out;
+    }
+    .slide {
+      min-width: 100%;
+      box-sizing: border-box;
+    }
+    .card-grid {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 24px;
     }
     .card {
-      background: rgba(0,0,0,0.5);
+      width: 180px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.6);
       border: 2px solid #3a6;
       box-shadow: inset 0 0 4px #030;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow:
-        inset 0 0 4px #030,
-        0 0 12px rgba(58,100,58,0.8);
+      text-align: center;
     }
     .card img, .card .placeholder {
-      width: 64px; height: 64px;
+      width: 64px;
+      height: 64px;
       image-rendering: pixelated;
-      border: 2px solid #3a6;
+      background: transparent;
       margin-bottom: 8px;
+      border: none;
     }
     .card .placeholder {
-      display: flex; align-items: center; justify-content: center;
-      font-size: 32px; color: #3a6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #3a6;
+      background: #111;
     }
     .card .label {
-      font-size: 14px; color: #b4ffd4; margin-bottom: 6px;
+      font-size: 12px;
+      color: #b4ffd4;
+      margin-bottom: 4px;
     }
     .card .desc {
-      font-size: 12px; color: #d0f8da; line-height: 1.3;
+      font-size: 10px;
+      color: #d0f8da;
+      line-height: 1.4;
     }
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.6);
+      border: 2px solid #3a6;
+      font-size: 36px;
+      color: #b4ffd4;
+      cursor: pointer;
+      z-index: 10;
+      padding: 8px 16px;
+      transition: transform 0.2s ease, background 0.2s;
+    }
+    .nav-btn:hover {
+      background: #112;
+      transform: translateY(-50%) scale(1.2);
+    }
+    .nav-left { left: -40px; }
+    .nav-right { right: -40px; }
     .back-btn {
-      margin-top: 32px;
+      margin-top: 40px;
       padding: 10px 20px;
       font-family: 'Press Start 2P', monospace;
       background: #0f0f0f;
       color: #b4ffd4;
-      border: 3px solid #3a6;
+      border: 2px solid #3a6;
       cursor: pointer;
       image-rendering: pixelated;
       transition: background-color 0.2s, box-shadow 0.2s;
     }
     .back-btn:hover {
       background-color: #112;
-      box-shadow: 0 0 6px rgba(58,100,58,0.8);
+      box-shadow: 0 0 6px rgba(58, 100, 58, 0.8);
     }
   </style>
 </head>
@@ -114,134 +152,110 @@
     </div>
     <h1>Cell Defense 역할 소개</h1>
 
-    <div class="section">
-      <h2>🧬 세포(기물) 유형</h2>
-      <div class="grid">
-        <div class="card">
-          <img src="images/cell.png" alt="기본 세포">
-          <div class="label">기본 세포</div>
-          <div class="desc">
-            단일 적에게 집중 공격<br>
-            빠른 발사 속도<br>
-            초기 비용: 50 ATP
+    <div class="slider-section">
+      <h2>🧬 모든 유닛 및 적 소개</h2>
+      <div class="slider">
+        <button class="nav-btn nav-left" onclick="slide(-1)">◀</button>
+        <button class="nav-btn nav-right" onclick="slide(1)">▶</button>
+        <div class="slide-track" id="track">
+
+          <div class="slide">
+            <div class="card-grid">
+              <div class="card">
+                <img src="images/cell.png" alt="기본 세포">
+                <div class="label">기본 세포</div>
+                <div class="desc">단일 적에게 집중 공격<br>빠른 발사 속도<br>50 ATP</div>
+              </div>
+              <div class="card">
+                <img src="images/new.png" alt="뉴런 세포">
+                <div class="label">뉴런 세포</div>
+                <div class="desc">다수 적 전격<br>광역 제어<br>80 ATP</div>
+              </div>
+              <div class="card">
+                <img src="images/plant.png" alt="식물 세포">
+                <div class="label">식물 세포</div>
+                <div class="desc">이동 경로 차단<br>높은 체력<br>60 ATP</div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="card">
-          <img src="images/new.png" alt="뉴런 세포">
-          <div class="label">뉴런 세포</div>
-          <div class="desc">
-            사거리 내 다수 적에 전격 공격<br>
-            광역 제어 특화<br>
-            초기 비용: 80 ATP
+
+          <div class="slide">
+            <div class="card-grid">
+              <div class="card">
+                <img src="images/Cellevo.png" alt="백혈구">
+                <div class="label">백혈구</div>
+                <div class="desc">둔화 확률 30%<br>공격 속도 상승</div>
+              </div>
+              <div class="card">
+                <img src="images/newevo.png" alt="시냅스 뉴런">
+                <div class="label">시냅스 뉴런</div>
+                <div class="desc">감전 효과<br>범위 증가</div>
+              </div>
+              <div class="card">
+                <img src="images/plantevo.png" alt="점액 세포벽">
+                <div class="label">점액 세포벽</div>
+                <div class="desc">파괴 시 둔화<br>체력 증가</div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="card">
-          <img src="images/plant.png" alt="식물 세포">
-          <div class="label">식물 세포</div>
-          <div class="desc">
-            적의 이동 경로 차단<br>
-            높은 체력 보유<br>
-            초기 비용: 60 ATP
+
+          <div class="slide">
+            <div class="card-grid">
+              <div class="card">
+                <img src="images/박테리오파지.png" alt="박테리오파지">
+                <div class="label">박테리오파지</div>
+                <div class="desc">속도 빠름<br>체력 낮음</div>
+              </div>
+              <div class="card">
+                <img src="images/기생충.png" alt="기생충">
+                <div class="label">기생충</div>
+                <div class="desc">속도 느림<br>체력 매우 높음</div>
+              </div>
+              <div class="card">
+                <img src="images/세균.png" alt="세균">
+                <div class="label">세균</div>
+                <div class="desc">속도·체력 중간<br>평균형</div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <div class="section">
-  <h2>🌟 진화형 세포 소개</h2>
-  <div class="grid">
-
-    <div class="card">
-      <img src="images/Cellevo.png" alt="백혈구">
-      <div class="label">백혈구 (기본세포 진화)</div>
-      <div class="desc">
-        흰색 투사체<br>
-        적을 30% 확률로 둔화<br>
-        공격 속도 상승
-      </div>
-    </div>
-
-    <div class="card">
-      <img src="images/newevo.png" alt="시냅스 뉴런">
-      <div class="label">시냅스 뉴런 (뉴런 진화)</div>
-      <div class="desc">
-        파란색 전기 이펙트<br>
-        주변 적 감전(스턴)<br>
-        전격 범위 향상
-      </div>
-    </div>
-
-    <div class="card">
-      <img src="images/plantevo.png" alt="점액 세포벽">
-      <div class="label">점액 세포벽 (식물세포 진화)</div>
-      <div class="desc">
-        파괴 시 주변 적 둔화<br>
-        체력 증가<br>
-        범위 슬로우 효과
-      </div>
-    </div>
-
-  </div>
-</div>
-
-
-
-    <div class="section">
-      <h2>🦠 일반 적 유형</h2>
-      <div class="grid">
-        <div class="card">
-          <img src="images/박테리오파지.png" alt="박테리오파지">
-          <div class="label">박테리오파지</div>
-          <div class="desc">
-            이동 속도 빠름<br>
-            체력 낮음<br>
-            단일 돌진
+          <div class="slide">
+            <div class="card-grid">
+              <div class="card">
+                <div class="placeholder">?</div>
+                <div class="label">5웨이브 보스</div>
+                <div class="desc">능력: ?<br>외형: ?</div>
+              </div>
+              <div class="card">
+                <div class="placeholder">?</div>
+                <div class="label">10웨이브 보스</div>
+                <div class="desc">능력: ?<br>외형: ?</div>
+              </div>
+              <div class="card">
+                <div class="placeholder">?</div>
+                <div class="label">15웨이브 보스</div>
+                <div class="desc">능력: ?<br>외형: ?</div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="card">
-          <img src="images/기생충.png" alt="기생충">
-          <div class="label">기생충</div>
-          <div class="desc">
-            이동 느림<br>
-            체력 매우 높음<br>
-            방어선 지연
-          </div>
-        </div>
-        <div class="card">
-          <img src="images/세균.png" alt="세균">
-          <div class="label">세균</div>
-          <div class="desc">
-            속도·체력 균형형<br>
-            평균적인 위협
-          </div>
+
         </div>
       </div>
     </div>
 
-    <div class="section">
-      <h2>👾 보스 몬스터</h2>
-      <div class="grid">
-        <div class="card">
-          <div class="placeholder">?</div>
-          <div class="label">5웨이브 보스</div>
-          <div class="desc">
-            능력: ?<br>
-            외형: ?
-          </div>
-        </div>
-        <div class="card">
-          <div class="placeholder">?</div>
-          <div class="label">10웨이브 최종 보스</div>
-          <div class="desc">
-            능력: ?<br>
-            외형: ?
-          </div>
-        </div>
-      </div>
-    </div>
     <button class="back-btn" onclick="location.href='main.html'">
       ▶ 메인 메뉴로 돌아가기
     </button>
   </div>
+
+  <script>
+    let currentSlide = 0;
+    function slide(dir) {
+      const track = document.getElementById('track');
+      const slides = document.querySelectorAll('.slide');
+      currentSlide = (currentSlide + dir + slides.length) % slides.length;
+      track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    }
+  </script>
 </body>
 </html>
