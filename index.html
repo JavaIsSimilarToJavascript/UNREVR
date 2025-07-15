@@ -216,7 +216,7 @@
           <li>식물 세포: 경로 차단·방어장 생성</li>
         </ul>
         <br>
-        <div id="cellCountInfo" style="margin-top:12px; color:#8f8;">세포 수: 0 / 20</div>
+        <div id="cellCountInfo" style="margin-top:12px; color:#8f8;font-size: 14px;">세포 수: 0 / 20</div>
       </aside>
 
       <!-- 중앙 메인 영역 -->
@@ -452,9 +452,9 @@ const enemyDescriptions = {
 // 선택된 업그레이드 대상, 셀 배치 중, 적 클릭용
 let selectedEnemy = null;
 
-let ATP = 350;
+let ATP = 350000;
 let health = 5;
-let wave = 1;
+let wave = 0;
 let enemiesToSpawn = 0;
 let enemiesSpawned = 0;
 let waveInProgress = false;
@@ -477,9 +477,9 @@ const enemies = [];
 const projectiles = [];
 
 const baseCellTypes = {
-  basic:  { damage:50, range:60, cooldownMax:50, cost:50, projectileSpeed:8 },
-  neuron: { damage:50, range:100, cooldownMax:120, cost:80 },
-  plant:  { hp:500, cost:60 }
+  basic:  { damage:10, range:60, cooldownMax:50, cost:50, projectileSpeed:8 },
+  neuron: { damage:8, range:100, cooldownMax:120, cost:80 },
+  plant:  { hp:300, cost:60 }
 };
 
 const enemyTypes = [
@@ -552,7 +552,7 @@ plantBtn.disabled   = ATP < pCost;
   timerDisplay.style.display = interWave ? 'inline-block' : 'none';
 
   atpDisplay.textContent      = ATP;
-  healthDisplay.textContent   = health;
+  healthDisplay.textContent   = Math.floor(health);
   waveDisplay.textContent     = wave;
   scoreDisplay.textContent    = `Score: ${score}`;
   highScoreDisplay.textContent= `HighScore: ${highScore}`;
@@ -823,16 +823,14 @@ function spawnEnemy() {
       animFrame: 0,
       animTick: 0
     };
-    
-  if (mapConfig.gimmick?.enemySpeedMultiplier) {
-    enemy.speed *= mapConfig.gimmick.enemySpeedMultiplier;
-  }
-
-  enemies.push(enemy);
+    if (mapConfig.gimmick?.enemySpeedMultiplier) {
+      enemy.speed *= mapConfig.gimmick.enemySpeedMultiplier;
+    }
+    enemies.push(enemy);
 
   } else {
     const base = enemyTypes[Math.floor(Math.random()*enemyTypes.length)];
-    const y = lines[Math.floor(Math.random()*enemyTypes.length)];
+    const y = lines[Math.floor(Math.random()*enemyTypes.length)]; // ← 여기 lines.length로 수정!
     enemies.push({
       type: base.type,
       x:0, y,
@@ -880,23 +878,16 @@ function getUpgradeCost(cell) {
 
 function startInterWave() {
   interWave = true;
-  waveStartLock = false;    // → 다음 웨이브 버튼 다시 누를 수 있도록 풀어 줌
+  waveStartLock = false;
   ATP += (100 + wave * 50);
 
-  // 타이머 초기화…
-  const duration = 30 * 1000;
-  const startTs  = Date.now();
-  timerDisplay.textContent = `Upgrade Time: ${Math.ceil(duration/1000)}s`;
+  // Upgrade Time UI 제거
+  timerDisplay.textContent = '';
   updateUIButtons();
 
-  interTimer = setInterval(() => {
-    // (생략)
-    if (elapsed >= duration) {
-      clearInterval(interTimer);
-      interTimer = null;
-      startBtn.click();  // 자동 시작
-    }
-  }, 200);
+  // 웨이브 자동 시작 타이머 제거
+  // 기존 interTimer, setInterval 등 모두 생략
+  // 사용자가 startBtn을 눌러야 다음 웨이브가 시작됨
 }
 
 
@@ -1026,43 +1017,48 @@ function loop() {
   }
   });
 
-  // ...이하 기존 loop 코드...
-
   // 세포 공격
-  cells.forEach(cell=>{
-    if(cell.type==='plant') return;
-    if(cell.cooldown>0){ cell.cooldown--; return; }
-    const type = baseCellTypes[cell.type];
-if(cell.type==='basic'){
-  let target=null, minD=Infinity;
-  enemies.forEach(e=>{
-    const d=Math.hypot(e.x-cell.x,e.y-cell.y);
-    if(d<=cell.range && d<minD){ minD=d; target=e; }
-  });
-  if(target){
-    // 5레벨 이상이면 쿨타임 감소
-    cell.cooldown = cell.upgrade >= 5 ? 30 : type.cooldownMax;
-    projectiles.push({
-      x:cell.x, y:cell.y, target, damage:cell.damage, speed:type.projectileSpeed,
-      isWhiteBlood: cell.upgrade >= 5 // 백혈구화 여부
-    });
+  cells.forEach(cell => {
+  if(cell.type==='plant') return;
+  if(cell.cooldown>0){
+    cell.cooldown--;
+    // 뉴런의 경우 쿨타임 동안에도 arcTargets을 유지
+    if(cell.type === 'neuron' && cell.arcTargets) {
+      // 아무 것도 하지 않음(arcTargets 유지)
+    }
+    return;
   }
-    } else if(cell.type==='neuron'){
-} else if (cell.type === 'neuron') {
-  const hits = enemies.filter(e => Math.hypot(e.x-cell.x, e.y-cell.y) <= cell.range);
-  if (hits.length) {
-    hits.forEach(e => {
-      e.hp -= cell.damage;
-      // 스턴 조건 분기
-      if (!mapConfig.gimmick?.neuronStunResistance && cell.upgrade >= 5) {
-        e.stun = 10;
-      }
+  const type = baseCellTypes[cell.type];
+  if(cell.type==='basic'){
+    let target=null, minD=Infinity;
+    enemies.forEach(e=>{
+      const d=Math.hypot(e.x-cell.x,e.y-cell.y);
+      if(d<=cell.range && d<minD){ minD=d; target=e; }
     });
-    cell.arcTargets=hits; cell.cooldown=type.cooldownMax;
-    cell.isBlueArc = cell.upgrade >= 5;
+    if(target){
+      cell.cooldown = cell.upgrade >= 5 ? 30 : type.cooldownMax;
+      projectiles.push({
+        x:cell.x, y:cell.y, target, damage:cell.damage, speed:type.projectileSpeed,
+        isWhiteBlood: cell.upgrade >= 5
+      });
+    }
+  } else if(cell.type==='neuron'){
+    const hits = enemies.filter(e => Math.hypot(e.x-cell.x, e.y-cell.y) <= cell.range);
+    if (hits.length) {
+      hits.forEach(e => {
+        e.hp -= cell.damage;
+        if (!mapConfig.gimmick?.neuronStunResistance && cell.upgrade >= 5) {
+          e.stun = 10;
+        }
+      });
+      cell.arcTargets = hits; // 쿨타임 동안 유지
+      cell.cooldown = type.cooldownMax;
+      cell.isBlueArc = cell.upgrade >= 5;
+    } else {
+      cell.arcTargets = null; // 맞은 적이 없으면 arcTargets 해제
+    }
   }
-}
-  });
+});
 
 enemies.forEach(e => {
   // ── 1) 이동 속도 세팅 ──
@@ -1084,8 +1080,8 @@ enemies.forEach(e => {
     // (1) 식물 세포 충돌 → 뒤로 튕기기
     if (
       cell.type === 'plant' &&
-      Math.abs(dx) <= cell.width/2 + e.size &&
-      Math.abs(dy) <= cell.height/2 + e.size*0.6
+      Math.abs(dx) <= 20 + e.size &&   // ← 세포벽(식물) 가로 반폭 20
+      Math.abs(dy) <= 30 + e.size * 0.6 // ← 세포벽(식물) 세로 반높이 30
     ) {
       // 식물에 데미지
       cell.hp -= e.damageToCell;
@@ -1100,9 +1096,10 @@ enemies.forEach(e => {
             }
           });
         }
-
         cells.splice(cells.indexOf(cell), 1);
       }
+      // 적을 뒤로 밀기 (막힘 효과)
+      e.x -= moveSpeed; // ← 이동을 취소(혹은 더 강하게 밀고 싶으면 *2 등)
       didCollide = true;
       break; // 충돌 시 for문 탈출
     }
@@ -1188,23 +1185,21 @@ for(let i=projectiles.length-1;i>=0;i--){
   // 적 제거·체력 소진
   for(let i=enemies.length-1;i>=0;i--){
     const e = enemies[i];
-    if(e.hp<=0){ enemies.splice(i,1); score+=10; ATP+=20;}
-    else if (e.x > 800) {
-      // 남은 HP의 1% 만큼 깎아준다
-      const dmg = e.hp * 0.01;
-      health = Math.max(0, health - dmg);
-      healthDisplay.textContent = health.toFixed(2);
+    // 1. hp<=0인 적은 즉시 삭제(아래 조건을 타지 않음)
+    if(e.hp<=0){ 
+      enemies.splice(i,1); 
+      score+=10; 
+      ATP+=20;
+      continue;
+    }
+    // 2. hp>0인 적만 체력 감소 조건 체크
+    if (e.x > canvas.width) {
+      health = Math.max(0, health - (e.damageToCell));
+      healthDisplay.textContent = Math.floor(health);
       enemies.splice(i, 1);
       if (health <= 0) {
         showWaveBanner('게임 종료!');
-        setTimeout(() => {
-          const playerData = {
-            score,
-            username: localStorage.getItem('gdh_username'),
-            realname: localStorage.getItem('gdh_realname')
-          };
-          location.href = 'hall.html?player=' + encodeURIComponent(JSON.stringify(playerData));
-        });
+        // 점수 표시 등 추가 코드가 있다면 여기에
         return;
       }
     }
