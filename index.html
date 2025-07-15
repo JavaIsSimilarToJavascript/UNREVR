@@ -151,17 +151,21 @@
       pointer-events: none;
     }
     #cellInfo {
-      position: absolute;
-      bottom: 8px;
-      right: 8px;
-      width: 200px;
-      padding: 8px;
-      background: rgba(17,17,17,0.9);
+      position: fixed;         /* 화면 전체 기준으로 고정 */
+      top: 60px;               /* 상단에서 60px (UI와 겹치지 않게) */
+      left: calc(50% + 700px); /* 게임 화면(800px) 중앙에서 오른쪽 바깥(400+20px) */
+      width: 300px;
+      max-height: 90vh;
+      overflow-y: auto;
+      z-index: 9999;
+      background: rgba(17,17,17,0.97);
       border: 2px solid #4a8;
       font-size: 12px;
       line-height: 1.4;
       color: #eee;
-      z-index: 10;
+      padding: 12px;
+      box-sizing: border-box;
+      box-shadow: 0 4px 24px #000a;
     }
     #cellInfo .description {
       font-size: 10px;
@@ -523,7 +527,7 @@ function updateCellInfo() {
     info.innerHTML = html;
 
     // 업그레이드 버튼 이벤트
-    document.getElementById('cellUpgradeBtn').onclick = () => {
+    document.getElementById('cellUpgradeBtn').addEventListener('click',() => {
       if (ATP < cost) return;
       ATP -= cost;
       c.upgrade = (c.upgrade || 0) + 1;
@@ -539,7 +543,7 @@ function updateCellInfo() {
       }
       updateUIButtons();
       updateCellInfo();
-    };
+    })
     return;
   }
   info.innerHTML = '';
