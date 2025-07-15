@@ -1185,17 +1185,12 @@ for(let i=projectiles.length-1;i>=0;i--){
   // 적 제거·체력 소진
   for(let i=enemies.length-1;i>=0;i--){
     const e = enemies[i];
-    // 1. hp<=0인 적은 즉시 삭제(아래 조건을 타지 않음)
-    if(e.hp<=0){ 
-      enemies.splice(i,1); 
-      score+=10; 
-      ATP+=20;
-      continue;
-    }
-    // 2. hp>0인 적만 체력 감소 조건 체크
-    if (e.x > canvas.width) {
-      health = Math.max(0, health - (e.damageToCell));
-      healthDisplay.textContent = Math.floor(health);
+    if(e.hp<=0){ enemies.splice(i,1); score+=10; ATP+=20;}
+    else if (e.x > 800) {
+      // 남은 HP의 1% 만큼 깎아준다
+      const dmg = e.hp * 0.01;
+      health = Math.max(0, health - dmg);
+      healthDisplay.textContent = health.toFixed(2);
       enemies.splice(i, 1);
       if (health <= 0) {
         showWaveBanner('게임 종료!');
