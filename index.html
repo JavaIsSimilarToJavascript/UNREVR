@@ -452,9 +452,9 @@ const enemyDescriptions = {
 // 선택된 업그레이드 대상, 셀 배치 중, 적 클릭용
 let selectedEnemy = null;
 
-let ATP = 350000;
-let health = 5;
-let wave = 0;
+let ATP = 40000;
+let health = 500;
+let wave = 13;
 let enemiesToSpawn = 0;
 let enemiesSpawned = 0;
 let waveInProgress = false;
@@ -830,12 +830,17 @@ function spawnEnemy() {
 
   } else {
     const base = enemyTypes[Math.floor(Math.random()*enemyTypes.length)];
-    const y = lines[Math.floor(Math.random()*enemyTypes.length)]; // ← 여기 lines.length로 수정!
+    const y = lines[Math.floor(Math.random()*lines.length)];
+    // wave 6부터 체력 보너스 적용
+    let hpBonus = 0;
+    if (wave >= 6) {
+      hpBonus = (wave - 5) * 10; // 6웨이브부터 웨이브마다 +10씩 추가
+    }
     enemies.push({
       type: base.type,
       x:0, y,
-      hp: base.hp + wave*5,
-      maxHp: base.hp + wave*5,
+      hp: base.hp + wave*5 + hpBonus,
+      maxHp: base.hp + wave*5 + hpBonus,
       speed: base.speed + wave*0.05,
       color: base.color,
       size: base.size,
@@ -881,6 +886,19 @@ function startInterWave() {
   waveStartLock = false;
   ATP += (100 + wave * 50);
 
+  // 웨이브 15가 끝나면 게임 종료
+  if (wave >= 15) {
+    showWaveBanner(`모든 웨이브 클리어!\n최종 점수: ${score}`);
+    // 버튼 비활성화
+    startBtn.style.display = 'none';
+    timerDisplay.style.display = 'none';
+    // 5초 뒤 end.html로 이동
+    setTimeout(() => {
+      window.location.href = 'end.html';
+    }, 5000);
+    return;
+  }
+
   // Upgrade Time UI 제거
   timerDisplay.textContent = '';
   updateUIButtons();
@@ -908,14 +926,35 @@ function drawElectricArc(x, y, ts, isBlue) {
   });
 }
 function drawCellImage(cell) {
+  // 진화 이미지 분기
   if (cell.type === 'plant') {
-    ctx.drawImage(imgPlant, cell.x - 20, cell.y - 30, 40, 60);
+    if (cell.upgrade >= 6) {
+      ctx.drawImage(imgPlantEvo, cell.x - 20, cell.y - 30, 40, 60);
+    } else {
+      ctx.drawImage(imgPlant, cell.x - 20, cell.y - 30, 40, 60);
+    }
   } else if (cell.type === 'basic') {
-    ctx.drawImage(imgCell, cell.x - 20, cell.y - 20, 40, 40);
+    if (cell.upgrade >= 6) {
+      ctx.drawImage(imgCellEvo, cell.x - 20, cell.y - 20, 40, 40);
+    } else {
+      ctx.drawImage(imgCell, cell.x - 20, cell.y - 20, 40, 40);
+    }
   } else if (cell.type === 'neuron') {
-    ctx.drawImage(imgNeuron, cell.x - 20, cell.y - 20, 40, 40);
+    if (cell.upgrade >= 6) {
+      ctx.drawImage(imgNeuronEvo, cell.x - 20, cell.y - 20, 40, 40);
+    } else {
+      ctx.drawImage(imgNeuron, cell.x - 20, cell.y - 20, 40, 40);
+    }
   }
 }
+
+// 이미지 로드 부분에 진화 이미지 추가
+const imgCellEvo = new Image();
+imgCellEvo.src = 'images/Cellevo.png';
+const imgPlantEvo = new Image();
+imgPlantEvo.src = 'images/plantevo.png';
+const imgNeuronEvo = new Image();
+imgNeuronEvo.src = 'images/newevo.png';
 
 function loop() {
   ctx.imageSmoothingEnabled = false;
@@ -1089,7 +1128,7 @@ enemies.forEach(e => {
       if (cell.hp <= 0) {
         // 5레벨 이상이면 주변 적 슬로우
         const slowRadius = cell.range || 60;
-        if (cell.hp <= 0 && cell.upgrade >= 5) {
+        if (cell.hp <= 0 && cell.upgrade >= 6) {
           enemies.forEach(e2 => {
             if (Math.hypot(e2.x - cell.x, e2.y - cell.y) < slowRadius) {
               e2.slow = 60;
@@ -1185,23 +1224,29 @@ for(let i=projectiles.length-1;i>=0;i--){
   // 적 제거·체력 소진
   for(let i=enemies.length-1;i>=0;i--){
     const e = enemies[i];
-    // 1. hp<=0인 적은 즉시 삭제(아래 조건을 타지 않음)
     if(e.hp<=0){ 
+      console.log('죽은 적군 제거', e);
       enemies.splice(i,1); 
       score+=10; 
       ATP+=20;
-      continue;
+      scoreDisplay.textContent = `Score: ${score}`;
+      atpDisplay.textContent = ATP;
+      continue; // 죽은 적은 더 이상 처리하지 않음
     }
-    // 2. hp>0인 적만 체력 감소 조건 체크
-    if (e.x > canvas.width) {
-      health = Math.max(0, health - (e.damageToCell));
-      healthDisplay.textContent = Math.floor(health);
+    if (e.x > 800 && e.hp > 0) {
+      console.log('살아있는 적군이 끝 도달', e);
+      const dmg = e.hp * 0.025;
+      health = Math.max(0, health - dmg);
+      healthDisplay.textContent = health.toFixed(2);
       enemies.splice(i, 1);
       if (health <= 0) {
         showWaveBanner('게임 종료!');
         // 점수 표시 등 추가 코드가 있다면 여기에
         return;
       }
+    }
+    if (e.x > 800 && e.hp <= 0) {
+      console.log('hp 0 이하인데 끝 도달', e);
     }
   }
 
