@@ -235,21 +235,6 @@
           <div id="cellInfo"></div>
         </div>
       </main>
-
-      <!-- 오른쪽 사이드바 -->
-      <aside class="sidebar right">
-        <h2>웨이브 정보</h2>
-        <div>현재 웨이브: <span id="wave">1</span></div>
-        <div>다음 보스: 슈퍼 바이러스</div>
-        <hr>
-        <h2>리더보드</h2>
-        <ul id="leaderboard">
-          <li>플레이어1 – 1200</li>
-          <li>플레이어2 – 950</li>
-          <li>플레이어3 – 730</li>
-        </ul>
-      </aside>
-
     </div>
   </div>
 
@@ -478,15 +463,15 @@ function updateCellInfo() {
   // 1) 셀 배치 선택 시
   if (selectedCell) {
     const type = selectedCell;
-    const names = { basic:'기본 세포', neuron:'뉴런', plant:'식물 세포' };
-    const tpl  = baseCellTypes[type];
+    const names = { basic: '기본 세포', neuron: '뉴런', plant: '식물 세포' };
+    const tpl = baseCellTypes[type];
     const cost = getPlacementCost(type);
     let html = `
       <div><strong>설치 후보 ▶ ${names[type]}</strong></div>
       <div class="description">${cellDescriptions[type]}</div>
-      <div>공격력: ${tpl.damage||0}</div>
-      <div>사거리: ${tpl.range||0}</div>
-      ${type==='plant'?`<div>체력: ${tpl.hp}</div>`:``}
+      <div>공격력: ${tpl.damage || 0}</div>
+      <div>사거리: ${tpl.range || 0}</div>
+      ${type === 'plant' ? `<div>체력: ${tpl.hp}</div>` : ``}
       <div>설치 비용: ${cost}</div>
     `;
     info.innerHTML = html;
@@ -495,7 +480,7 @@ function updateCellInfo() {
 
   // 2) 적 클릭 시
   if (selectedEnemy) {
-    const e    = selectedEnemy;
+    const e = selectedEnemy;
     const name = enemyNames[e.type];
     const desc = enemyDescriptions[e.type];
     let html = `
@@ -509,16 +494,22 @@ function updateCellInfo() {
     return;
   }
 
-  // 3) 세포 클릭 시 업그레이드 버튼만 활성화 (삭제 버튼 제거)
+  // 3) 세포 클릭 시 업그레이드 버튼 활성화
   if (selectedUpgradeTarget) {
-    const c    = selectedUpgradeTarget;
+    const c = selectedUpgradeTarget;
     const type = c.type;
-    const names= { basic:'기본 세포', neuron:'뉴런', plant:'식물 세포' };
-    const curr = { damage:c.damage||0, range:c.range||0, hp:c.maxHp||0 };
+    const names = { basic: '기본 세포', neuron: '뉴런', plant: '식물 세포' };
+    const curr = { damage: c.damage || 0, range: c.range || 0, hp: c.maxHp || 0 };
     const next = { ...curr };
-    if (type==='basic')     { next.damage+=2;  next.range+=10; }
-    else if (type==='neuron'){ next.damage+=1.5;next.range+=8; }
-    else /* plant */        { next.hp+=30; }
+    if (type === 'basic') {
+      next.damage += 2;
+      next.range += 10;
+    } else if (type === 'neuron') {
+      next.damage += 1.5;
+      next.range += 8;
+    } else /* plant */ {
+      next.hp += 30;
+    }
     const cost = getUpgradeCost(c);
 
     let html = `
@@ -526,8 +517,8 @@ function updateCellInfo() {
       <div class="description">${cellDescriptions[type]}</div>
       <div>공격력: ${curr.damage} → ${next.damage}</div>
       <div>사거리: ${curr.range} → ${next.range}</div>
-      ${type==='plant'?`<div>체력: ${curr.hp} → ${next.hp}</div>`:``}
-      <button id="cellUpgradeBtn" ${ATP<cost?'disabled':''}>레벨업 (${cost})</button>
+      ${type === 'plant' ? `<div>체력: ${curr.hp} → ${next.hp}</div>` : ``}
+      <button id="cellUpgradeBtn" ${ATP < cost ? 'disabled' : ''}>레벨업 (${cost})</button>
     `;
     info.innerHTML = html;
 
@@ -535,16 +526,16 @@ function updateCellInfo() {
     document.getElementById('cellUpgradeBtn').onclick = () => {
       if (ATP < cost) return;
       ATP -= cost;
-      c.upgrade = (c.upgrade||0) + 1;
-      if (c.type==='basic') {
+      c.upgrade = (c.upgrade || 0) + 1;
+      if (c.type === 'basic') {
         c.damage += 2;
-        c.range  += 10;
-      } else if (c.type==='neuron') {
+        c.range += 10; // 사거리 증가
+      } else if (c.type === 'neuron') {
         c.damage += 1.5;
-        c.range  += 8;
+        c.range += 8; // 사거리 증가
       } else {
-        c.hp     += 30;
-        c.maxHp  += 30;
+        c.hp += 30;
+        c.maxHp += 30;
       }
       updateUIButtons();
       updateCellInfo();
@@ -552,6 +543,13 @@ function updateCellInfo() {
     return;
   }
   info.innerHTML = '';
+}
+
+// 업그레이드 비용 계산 함수
+function getUpgradeCost(cell) {
+  const base = 50;
+  const lvl = cell.upgrade || 0;
+  return Math.floor(base * (1 + lvl * 0.5)); // 업그레이드 레벨에 따라 비용 증가
 }
 
 function spawnWave() {
@@ -604,11 +602,6 @@ function getPlacementCost(type) {
   const base = baseCellTypes[type].cost;
   const count = cells.filter(c => c.type === type).length;
   return Math.max( Math.floor(base * (1 + count * 0.1)), base );
-}
-function getUpgradeCost(cell) {
-  const base = 50;
-  const lvl  = cell.upgrade || 0;
-  return Math.floor(base * (1 + lvl * 0.5));
 }
 
 function startInterWave() {
