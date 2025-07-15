@@ -234,11 +234,11 @@
         <div>다음 보스: 슈퍼 바이러스</div>
         <hr>
         <h2>리더보드</h2>
-        <ol id="leaderboard">
+        <ul id="leaderboard">
           <li>플레이어1 – 1200</li>
           <li>플레이어2 – 950</li>
           <li>플레이어3 – 730</li>
-        </ol>
+        </ul>
       </aside>
 
     </div>
@@ -500,7 +500,7 @@ function updateCellInfo() {
     return;
   }
 
-  // 3) 세포 클릭 시 업그레이드/삭제 버튼 활성화
+  // 3) 세포 클릭 시 업그레이드 버튼만 활성화 (삭제 버튼 제거)
   if (selectedUpgradeTarget) {
     const c    = selectedUpgradeTarget;
     const type = c.type;
@@ -519,40 +519,26 @@ function updateCellInfo() {
       <div>사거리: ${curr.range} → ${next.range}</div>
       ${type==='plant'?`<div>체력: ${curr.hp} → ${next.hp}</div>`:``}
       <button id="cellUpgradeBtn" ${ATP<cost?'disabled':''}>레벨업 (${cost})</button>
-      <button id="cellDeleteBtn" style="margin-left:8px;background:#f44;color:#fff;">이 세포 삭제</button>
     `;
     info.innerHTML = html;
 
     // 업그레이드 버튼 이벤트
     document.getElementById('cellUpgradeBtn').onclick = () => {
-      const target = selectedUpgradeTarget;
-      if (!target) return;
       if (ATP < cost) return;
       ATP -= cost;
-      target.upgrade = (target.upgrade||0) + 1;
+      c.upgrade = (c.upgrade||0) + 1;
       if (c.type==='basic') {
-        target.damage += 2;
-        target.range  += 10;
-      } else if (target.type==='neuron') {
-        target.damage += 1.5;
-        target.range  += 8;
+        c.damage += 2;
+        c.range  += 10;
+      } else if (c.type==='neuron') {
+        c.damage += 1.5;
+        c.range  += 8;
       } else {
-        target.hp     += 30;
-        target.maxHp  += 30;
+        c.hp     += 30;
+        c.maxHp  += 30;
       }
-      selectedUpgradeTarget = target;
       updateUIButtons();
       updateCellInfo();
-    };
-    // 삭제 버튼 이벤트
-    document.getElementById('cellDeleteBtn').onclick = () => {
-      const idx = cells.indexOf(selectedUpgradeTarget);
-      if (idx !== -1) {
-        cells.splice(idx, 1);
-        selectedUpgradeTarget = null; // 먼저 null 처리
-        updateUIButtons();            // info창도 같이 갱신
-        showWaveBanner('세포 삭제됨');
-      }
     };
     return;
   }
