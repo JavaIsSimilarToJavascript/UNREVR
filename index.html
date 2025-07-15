@@ -429,7 +429,7 @@ for (let i = 190; i <= 192; i++) {
   covidFrames.push(img);
 }
 
-for (let i = 10; i <= 14; i++) {
+for (let i = 10; i <= 12; i++) {
   const img = new Image();
   img.src = `images/finalboss${i}.png`;
   cancerFrames.push(img);
@@ -471,7 +471,7 @@ let selectedEnemy = null;
 
 let ATP = 40000;
 let health = 500;
-let wave = 9;
+let wave = 14;
 let enemiesToSpawn = 0;
 let enemiesSpawned = 0;
 let waveInProgress = false;
@@ -944,9 +944,9 @@ function startInterWave() {
     // 버튼 비활성화
     startBtn.style.display = 'none';
     timerDisplay.style.display = 'none';
-    // 5초 뒤 end.html로 이동
+    // 5초 뒤 main.html로 이동
     setTimeout(() => {
-      window.location.href = 'end.html';
+      window.location.href = 'main.html';
     }, 5000);
     return;
   }
@@ -1195,14 +1195,22 @@ enemies.forEach(e => {
       if (cell.hp <= 0) {
         // 5레벨 이상이면 주변 적 슬로우
         const slowRadius = cell.range || 60;
-        if (cell.hp <= 0 && cell.upgrade >= 6) {
+        if (cell.upgrade >= 6) {
           enemies.forEach(e2 => {
             if (Math.hypot(e2.x - cell.x, e2.y - cell.y) < slowRadius) {
               e2.slow = 60;
             }
           });
         }
-        cell.disappearEffect = 30; // 죽은 세포 효과
+        // 죽은 식물 세포는 즉시 배열에서 제거 (이펙트는 별도 처리)
+        const idx = cells.indexOf(cell);
+        if (idx !== -1) {
+          cell.disappearEffect = 30; // 죽은 세포 효과
+          cells.splice(idx, 1);
+        }
+        updateCellCount();
+        updateCellInfo();
+        break;
       }
       // 적을 뒤로 밀기 (막힘 효과)
       e.x -= moveSpeed; // ← 이동을 취소(혹은 더 강하게 밀고 싶으면 *2 등)
