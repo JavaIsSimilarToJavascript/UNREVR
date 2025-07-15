@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Cell Defense - 연구 노트</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Press Start 2P', monospace;
+      background: #0e0e0e;
+      color: #e0f7ea;
+      background-image: linear-gradient(120deg, #111 25%, #0d0d0d 25%, #0d0d0d 50%, #111 50%, #111 75%, #0d0d0d 75%);
+      background-size: 40px 40px;
+      animation: backgroundMove 60s linear infinite;
+    }
+
+    @keyframes backgroundMove {
+      from { background-position: 0 0; }
+      to { background-position: 1000px 0; }
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 60px auto;
+      padding: 40px;
+      background-color: rgba(0, 0, 0, 0.75);
+      border: 3px solid #3a6;
+      box-shadow: 0 0 12px rgba(58,100,58,0.7);
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 30px;
+      text-align: center;
+      color: #80ffb3;
+      text-shadow: 0 0 4px #030;
+    }
+
+    .log-entry {
+      margin-bottom: 32px;
+      padding: 18px;
+      border-left: 4px solid #3a6;
+      background: rgba(255, 255, 255, 0.03);
+      box-shadow: inset 0 0 6px #0a0;
+      animation: fadeIn 1.5s ease;
+    }
+
+    .log-entry h3 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: #a0e8c0;
+    }
+
+    .log-entry p {
+      font-size: 12px;
+      color: #d2ffe7;
+      line-height: 1.6;
+    }
+
+    .log-entry.boss {
+      border-left: 4px solid #f55;
+      background: rgba(255, 0, 0, 0.05);
+      box-shadow: 0 0 8px #c22 inset;
+    }
+
+    .log-entry.boss h3 {
+      color: #ff9999;
+    }
+
+    .log-entry.boss p {
+      color: #ffcccc;
+    }
+
+    .secret-message {
+      margin-top: 60px;
+      text-align: center;
+      color: #faa;
+      font-size: 13px;
+      animation: pulse 2s infinite;
+      text-shadow: 0 0 5px red;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 1; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 연구 노트</h1>
+
+    <div class="log-entry">
+      <h3>📅 2034.07.01 — 연구 일지 #1</h3>
+      <p>초기 감염자는 세포막에 이상한 파열을 일으켰다. 바이러스는 기계적 지능처럼 행동하며, 면역 시스템을 우회하고 있다.</p>
+    </div>
+
+    <div class="log-entry">
+      <h3>📅 2034.07.05 — 연구 일지 #2</h3>
+      <p>우리는 이 병원체를 '코로나 바이러스'라고 명명했다. 현재까지 1차 형태만 관측됐지만, 데이터상 변이를 예고하고 있다.</p>
+    </div>
+
+    <div class="log-entry">
+      <h3>📅 2034.07.08 — 연구 일지 #3</h3>
+      <p>델타 변이체가 출현. 기존 방어 세포는 속수무책이었다. 모든 방어 알고리즘 재작성 중. 시간은 없다.</p>
+    </div>
+
+    <div class="log-entry boss">
+      <h3>⚠️ [기밀] 오미크론 퓨전체 출현</h3>
+      <p>생물체인가 기계인가. 자체 복제 능력 + 유전자 통합 + 에너지 동화... 우리 방식으로는 설명 불가능. 더는 감당할 수 없다.</p>
+    </div>
+
+    <div class="log-entry">
+      <h3>📅 2034.07.14 — 연구 일지 #4</h3>
+      <p>셀이 방어하는 게 맞는가? 아니면 우리는 바이러스의 실험체인가? 최근 데이터는 셀이 우리를 감시하고 있다는 이론을 지지하고 있다...</p>
+    </div>
+
+    <div class="secret-message">
+      ※ “너희가 연구소에 있다고 생각했지... 사실, 너희가 실험체였다.” ※
+    </div>
+
+    <div class="back-button-container">
+      <button onclick="location.href='main.html'">← 메인 메뉴로</button>
+    </div>
+  </div>
+<style>
+    .back-button-container {
+      margin-top: 40px;
+      text-align: center;
+    }
+
+    .back-button-container button {
+      font-family: 'Press Start 2P', monospace;
+      padding: 12px 24px;
+      font-size: 12px;
+      background-color: #111;
+      color: #b4ffd4;
+      border: 2px solid #3a6;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+
+    .back-button-container button:hover {
+      background-color: #122;
+      box-shadow: 0 0 8px rgba(58,255,158,0.5);
+    }
+  </style>
+</body>
+</html>

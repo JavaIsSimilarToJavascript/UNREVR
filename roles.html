@@ -2,260 +2,302 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Cell Defense – 역할 소개</title>
+  <title>Cell Defense - 실험체 기록</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    * {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
       padding: 0;
       font-family: 'Press Start 2P', monospace;
-      background-color: #1a1a1a;
-      background-image: radial-gradient(circle at 20% 20%, rgba(58, 100, 58, 0.2) 2px, transparent 2px), radial-gradient(circle at 80% 80%, rgba(58, 100, 58, 0.2) 2px, transparent 2px);
-      background-size: 40px 40px;
-      animation: bgMove 30s infinite linear;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-    @keyframes bgMove {
-      0% { background-position: 0 0, 0 0; }
-      50% { background-position: 200px 200px, -200px -200px; }
-      100% { background-position: 0 0, 0 0; }
-    }
-    .container {
-      width: 850px;
-      padding: 40px 30px;
-      background: rgba(0, 0, 0, 0.7);
-      border: 4px solid #3a6;
-      box-shadow: inset 0 0 8px #030, 0 0 12px rgba(58, 100, 58, 0.6);
-      text-align: center;
-      position: relative;
+      background-color: #121212;
+      color: #e0f7ea;
       overflow: hidden;
     }
-    .logo img {
-      width: 100px;
-      height: 100px;
-      image-rendering: pixelated;
-      margin-bottom: 20px;
+
+    .background-floaters {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
     }
-    h1 {
-      font-size: 32px;
+    .floater {
+      position: absolute;
+      width: 64px; height: 64px;
+      background: url('images/floater.png') no-repeat center/contain;
+      opacity: 0.1;
+      animation: float 30s linear infinite;
+    }
+    @keyframes float {
+      0% { transform: translateY(100vh) translateX(0); }
+      100% { transform: translateY(-100vh) translateX(200px); }
+    }
+
+    .report {
+      width: 860px;
+      min-height: 600px;
+      margin: 40px auto;
+      padding: 40px;
+      background: #1b1b1b;
+      border: 4px double #3a6;
+      box-shadow: 0 0 20px rgba(58, 100, 58, 0.5);
+      position: relative;
+      z-index: 2;
+      transition: transform 0.6s ease, opacity 0.6s ease;
+    }
+    .report.fade-out {
+      transform: translateX(-100px);
+      opacity: 0;
+    }
+    .report::before {
+      content: "PAGE" attr(data-page);
+      position: absolute;
+      top: 16px;
+      right: 24px;
+      font-size: 10px;
+      color: #67d6a3;
+    }
+    h2 {
+      font-size: 20px;
       color: #80ffb3;
-      text-shadow: 1px 1px 2px #030, 0 0 4px rgba(58, 100, 58, 0.6);
+      border-bottom: 2px dashed #3a6;
+      padding-bottom: 8px;
       margin-bottom: 20px;
     }
-    .slider-section {
-      margin: 30px 0;
+    .specimen {
+      display: flex;
+      gap: 30px;
+      align-items: flex-start;
     }
-    .slider-section h2 {
+    .specimen img {
+      width: 120px;
+      height: 120px;
+      image-rendering: pixelated;
+      border: 2px solid #3a6;
+      box-shadow: 0 0 8px rgba(58,100,58,0.7);
+      background: #000;
+    }
+    .info {
+      flex: 1;
+    }
+    .info h3 {
       font-size: 16px;
       color: #a0e8c0;
-      margin-bottom: 16px;
-      text-align: left;
-      padding-left: 10px;
-      border-left: 4px solid #3a6;
+      margin: 0 0 8px;
     }
-    .slider {
-      position: relative;
-      overflow: visible;
-    }
-    .slide-track {
-      display: flex;
-      transition: transform 0.4s ease-in-out;
-    }
-    .slide {
-      min-width: 100%;
-      box-sizing: border-box;
-    }
-    .card-grid {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 24px;
-    }
-    .card {
-      width: 180px;
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.6);
-      border: 2px solid #3a6;
-      box-shadow: inset 0 0 4px #030;
-      text-align: center;
-    }
-    .card img, .card .placeholder {
-      width: 64px;
-      height: 64px;
-      image-rendering: pixelated;
-      background: transparent;
-      margin-bottom: 8px;
-      border: none;
-    }
-    .card .placeholder {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      color: #3a6;
-      background: #111;
-    }
-    .card .label {
+    .info p {
       font-size: 12px;
-      color: #b4ffd4;
-      margin-bottom: 4px;
-    }
-    .card .desc {
-      font-size: 10px;
+      line-height: 1.6;
       color: #d0f8da;
-      line-height: 1.4;
+      margin: 6px 0;
     }
     .nav-btn {
-      position: absolute;
+      position: fixed;
       top: 50%;
       transform: translateY(-50%);
-      background: rgba(0, 0, 0, 0.6);
+      background: #0f0f0f;
       border: 2px solid #3a6;
-      font-size: 36px;
       color: #b4ffd4;
+      font-size: 24px;
       cursor: pointer;
+      padding: 12px 16px;
       z-index: 10;
-      padding: 8px 16px;
-      transition: transform 0.2s ease, background 0.2s;
+      opacity: 0.8;
     }
     .nav-btn:hover {
-      background: #112;
-      transform: translateY(-50%) scale(1.2);
+      background: #1a1a1a;
+      box-shadow: 0 0 10px #3a6;
+      opacity: 1;
     }
-    .nav-left { left: -40px; }
-    .nav-right { right: -40px; }
+    .nav-left {
+      left: 20px;
+    }
+    .nav-right {
+      right: 20px;
+    }
+    .restricted {
+      background: repeating-linear-gradient(45deg, #222, #222 10px, #111 10px, #111 20px);
+      color: #f33;
+      border-color: #f33;
+    }
+    .restricted::before {
+      content: "접근 제한!";
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #f33;
+      color: white;
+      padding: 4px 12px;
+      font-size: 14px;
+    }
+    .glitched-text {
+      background: black;
+      color: black;
+      display: inline-block;
+      padding: 0 4px;
+    }
     .back-btn {
-      margin-top: 40px;
-      padding: 10px 20px;
-      font-family: 'Press Start 2P', monospace;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
       background: #0f0f0f;
-      color: #b4ffd4;
       border: 2px solid #3a6;
+      color: #b4ffd4;
+      padding: 10px 20px;
+      font-size: 14px;
       cursor: pointer;
-      image-rendering: pixelated;
-      transition: background-color 0.2s, box-shadow 0.2s;
+      z-index: 10;
     }
     .back-btn:hover {
-      background-color: #112;
-      box-shadow: 0 0 6px rgba(58, 100, 58, 0.8);
+      background: #1a1a1a;
+      box-shadow: 0 0 8px #3a6;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="logo">
-      <img src="images/Unrevr.png" alt="UNREVR 로고">
-    </div>
-    <h1>Cell Defense 역할 소개</h1>
-
-    <div class="slider-section">
-      <h2>🧬 모든 유닛 및 적 소개</h2>
-      <div class="slider">
-        <button class="nav-btn nav-left" onclick="slide(-1)">◀</button>
-        <button class="nav-btn nav-right" onclick="slide(1)">▶</button>
-        <div class="slide-track" id="track">
-
-          <div class="slide">
-            <div class="card-grid">
-              <div class="card">
-                <img src="images/cell.png" alt="기본 세포">
-                <div class="label">기본 세포</div>
-                <div class="desc">단일 적에게 집중 공격<br>빠른 발사 속도<br>50 ATP</div>
-              </div>
-              <div class="card">
-                <img src="images/new.png" alt="뉴런 세포">
-                <div class="label">뉴런 세포</div>
-                <div class="desc">다수 적 전격<br>광역 제어<br>80 ATP</div>
-              </div>
-              <div class="card">
-                <img src="images/plant.png" alt="식물 세포">
-                <div class="label">식물 세포</div>
-                <div class="desc">이동 경로 차단<br>높은 체력<br>60 ATP</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="slide">
-            <div class="card-grid">
-              <div class="card">
-                <img src="images/Cellevo.png" alt="백혈구">
-                <div class="label">백혈구</div>
-                <div class="desc">둔화 확률 30%<br>공격 속도 상승</div>
-              </div>
-              <div class="card">
-                <img src="images/newevo.png" alt="시냅스 뉴런">
-                <div class="label">시냅스 뉴런</div>
-                <div class="desc">감전 효과<br>범위 증가</div>
-              </div>
-              <div class="card">
-                <img src="images/plantevo.png" alt="점액 세포벽">
-                <div class="label">점액 세포벽</div>
-                <div class="desc">파괴 시 둔화<br>체력 증가</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="slide">
-            <div class="card-grid">
-              <div class="card">
-                <img src="images/박테리오파지.png" alt="박테리오파지">
-                <div class="label">박테리오파지</div>
-                <div class="desc">속도 빠름<br>체력 낮음</div>
-              </div>
-              <div class="card">
-                <img src="images/기생충.png" alt="기생충">
-                <div class="label">기생충</div>
-                <div class="desc">속도 느림<br>체력 매우 높음</div>
-              </div>
-              <div class="card">
-                <img src="images/세균.png" alt="세균">
-                <div class="label">세균</div>
-                <div class="desc">속도·체력 중간<br>평균형</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="slide">
-            <div class="card-grid">
-              <div class="card">
-                <div class="placeholder">?</div>
-                <div class="label">5웨이브 보스</div>
-                <div class="desc">능력: ?<br>외형: ?</div>
-              </div>
-              <div class="card">
-                <div class="placeholder">?</div>
-                <div class="label">10웨이브 보스</div>
-                <div class="desc">능력: ?<br>외형: ?</div>
-              </div>
-              <div class="card">
-                <div class="placeholder">?</div>
-                <div class="label">15웨이브 보스</div>
-                <div class="desc">능력: ?<br>외형: ?</div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-
-    <button class="back-btn" onclick="location.href='main.html'">
-      ▶ 메인 메뉴로 돌아가기
-    </button>
+  <div class="background-floaters">
+    <div class="floater" style="top:80%;left:10%;animation-delay:0s;"></div>
+    <div class="floater" style="top:90%;left:50%;animation-delay:5s;"></div>
+    <div class="floater" style="top:85%;left:80%;animation-delay:10s;"></div>
   </div>
 
+  <div class="report" id="report" data-page="1"></div>
+  <button class="nav-btn nav-left" onclick="prevPage()">◀</button>
+  <button class="nav-btn nav-right" onclick="nextPage()">▶</button>
+  <button class="back-btn" onclick="location.href='main.html'">메인 화면으로</button>
+
   <script>
-    let currentSlide = 0;
-    function slide(dir) {
-      const track = document.getElementById('track');
-      const slides = document.querySelectorAll('.slide');
-      currentSlide = (currentSlide + dir + slides.length) % slides.length;
-      track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    const pages = [
+      {
+        img: 'images/cell.png',
+        title: '기본 세포 (CELL-α)',
+        func: '단일 바이러스 집중 포격. 고속 연사형 방어 세포.',
+        bio: '핵, 미토콘드리아, 소포체, 리보솜, 리소좀, 골지체로 구성되어 있으며, 면역 초기 반응의 중심.',
+        energy: '50 ATP',
+        result: '반응 속도 0.3s / 제거율 74%'
+      },
+      {
+        img: 'images/new.png',
+        title: '뉴런 세포 (NEU-β)',
+        func: '범위 내 적에게 전기 자극을 전달하여 감전 상태 유발.',
+        bio: '수상돌기, 축삭돌기, 시냅스 소포로 구성. 다수의 적을 동시에 자극.',
+        energy: '80 ATP',
+        result: '감전 지속시간 평균 2.3s / 감전 확률 64%'
+      },
+      {
+        img: 'images/plant.png',
+        title: '식물 세포 (PLN-γ)',
+        func: '세포벽으로 길목 차단. 높은 생존력과 내구성.',
+        bio: '세포벽, 엽록체, 중앙액포, 골지체, 미토콘드리아 등으로 구성.',
+        energy: '60 ATP',
+        result: '지속시간 6.1s / 이동속도 감소율 48%'
+      },
+      {
+        img: 'images/cellevo.png',
+        title: '백혈구 (CELL-Ω)',
+        func: '공격 속도 강화, 투사체에 둔화 효과 부여.',
+        bio: '변형된 핵과 고활성 리소좀, 빠른 ATP 소비 능력을 지님. 적을 일정 확률로 둔화시키는 면역계 특화 세포.',
+        energy: '100 ATP',
+        result: '공격 속도 +30% / 둔화 확률 33%'
+      },
+      {
+        img: 'images/newevo.png',
+        title: '시냅스 뉴런 (NEU-Ω)',
+        func: '감전 범위 증가, 적 스턴 기능 부여.',
+        bio: '강화된 시냅스 구조와 전기 자극 전도 속도를 보유. 다수의 적을 한 번에 마비시키는 능력.',
+        energy: '130 ATP',
+        result: '스턴 확률 28% / 범위 +20%'
+      },
+      {
+        img: 'images/plantevo.png',
+        title: '점액 세포벽 (PLN-Ω)',
+        func: '파괴 시 둔화 구역 생성.',
+        bio: '내부에 점액 소낭을 내포하며, 파괴되면 주변 일정 범위에 감속 물질을 분사함.',
+        energy: '90 ATP',
+        result: '둔화 범위 반경 60px / 지속시간 4.5s'
+      },
+      {
+        restricted: true,
+        title: '슈퍼 박테리아 (WAVE-5)',
+        img: 'images/superbacteria0.png',
+        desc: '<span class="glitched-text">▮▮▮▮▮</span> 형태로 진화한 고위 감염체. <span class="glitched-text">▮▮▮</span> 파괴력이 특징.',
+        alert: 'ACCESS DENIED: SECURITY LEVEL RED'
+      },
+      {
+        restricted: true,
+        title: '코로나 바이러스 (WAVE-10)',
+        img: 'images/covid190.png',
+        desc: 'RNA 기반의 변종 감염체. 다중 돌기 구조를 갖추고 <span class="glitched-text">▮▮▮▮▮</span> 방식으로 <span class="glitched-text">▮▮</span> 침투.',
+        alert: 'CLASSIFIED FILE: DO NOT DISTRIBUTE'
+      },
+      {
+        restricted: true,
+        title: '델타-오미크론 변이 (WAVE-15)',
+        img: 'images/finalboss10.png',
+        desc: '예측 불가한 전이 형태. 기록이 손상되어 있음. <span class="glitched-text">▮▮▮▮▮▮▮</span> 구성체로 추정됨.',
+        alert: 'TOP SECRET – LEVEL OMEGA'
+      }
+    ];
+
+    let page = 0;
+    const report = document.getElementById('report');
+
+    function updatePage() {
+      const p = pages[page];
+      report.classList.add('fade-out');
+      setTimeout(() => {
+        report.className = 'report' + (p.restricted ? ' restricted' : '');
+        report.setAttribute('data-page', page + 1);
+
+        if (p.restricted) {
+          report.innerHTML = `
+            <h2>${p.title}</h2>
+            <div class="specimen">
+              <img src="${p.img}" alt="${p.title}">
+              <div class="info">
+                <h3>${p.alert}</h3>
+                <p>${p.desc}</p>
+              </div>
+            </div>
+          `;
+        } else {
+          report.innerHTML = `
+            <h2>실험체 기록 00${page + 1}</h2>
+            <div class="specimen">
+              <img src="${p.img}" alt="${p.title}">
+              <div class="info">
+                <h3>코드네임: ${p.title}</h3>
+                <p><strong>기능:</strong> ${p.func}</p>
+                <p><strong>생물학적 설명:</strong> ${p.bio}</p>
+                <p><strong>소모 에너지:</strong> ${p.energy}</p>
+                <p><strong>실험 결과:</strong> ${p.result}</p>
+              </div>
+            </div>
+          `;
+        }
+        report.classList.remove('fade-out');
+      }, 300);
     }
+
+
+
+    function prevPage() {
+      page = (page - 1 + pages.length) % pages.length;
+      updatePage();
+    }
+
+    function nextPage() {
+      page = (page + 1) % pages.length;
+      updatePage();
+    }
+
+    updatePage();
   </script>
 </body>
 </html>
