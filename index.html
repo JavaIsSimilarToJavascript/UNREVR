@@ -409,6 +409,7 @@ imgNeuron.src = 'images/new.png';
 const superBacteriaFrames = [];
 const covidFrames = [];
 const cancerFrames = [];
+const cancerFrames2 = [];
 
 const imgVirusSprite = new Image();
 imgVirusSprite.src = 'images/세균.png';  // virus 대체 이미지
@@ -433,6 +434,12 @@ for (let i = 10; i <= 12; i++) {
   const img = new Image();
   img.src = `images/finalboss${i}.png`;
   cancerFrames.push(img);
+}
+
+for (let i = 13; i <= 14; i++) {
+  const img = new Image();
+  img.src = `images/finalboss${i}.png`;
+  cancerFrames2.push(img);
 }
 
 
@@ -1276,6 +1283,18 @@ enemies.forEach(e => {
       e.size * 2, e.size * 2
     );
   }
+  // 15웨이브 보스 2페이즈 구현
+  else if (e.type === 'cancerCell2') {
+    e.animTick = (e.animTick || 0) + 1;
+    if (e.animTick % 8 === 0) {
+      e.animFrame = ((e.animFrame || 0) + 1) % cancerFrames2.length;
+    }
+    ctx.drawImage(
+      cancerFrames2[e.animFrame || 0],
+      e.x - e.size, e.y - e.size,
+      e.size * 2, e.size * 2
+    );
+  }
 
   // 선택 강조
   if (e === selectedEnemy) {
@@ -1320,6 +1339,27 @@ for(let i=projectiles.length-1;i>=0;i--){
   for(let i=enemies.length-1;i>=0;i--){
     const e = enemies[i];
     if(e.hp<=0){ 
+      // 15웨이브 보스 2페이즈 구현
+      if (e.type === 'cancerCell' && wave === 15 && !e.secondPhase) {
+        // 2페이즈 보스 소환
+        showWaveBanner('아직 끝이 아니다! 더 강한 암세포 등장!');
+        const y = e.y;
+        const boss2 = {
+          type: 'cancerCell2',
+          x: 0, y: y,
+          hp: 1800,
+          maxHp: 1800,
+          speed: 1.0,
+          color: '#f0f',
+          size: 60,
+          damageToCell: 20,
+          blocked: false, blockTimer: 0,
+          animFrame: 0,
+          animTick: 0,
+          secondPhase: true
+        };
+        enemies.push(boss2);
+      }
       console.log('죽은 적군 제거', e);
       enemies.splice(i,1); 
       score+=10; 
