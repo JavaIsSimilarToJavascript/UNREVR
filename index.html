@@ -476,9 +476,9 @@ const enemyDescriptions = {
 // 선택된 업그레이드 대상, 셀 배치 중, 적 클릭용
 let selectedEnemy = null;
 
-let ATP = 40000;
-let health = 500;
-let wave = 14;
+let ATP = 400;
+let health = 5;
+let wave = 0;
 let enemiesToSpawn = 0;
 let enemiesSpawned = 0;
 let waveInProgress = false;
@@ -495,6 +495,9 @@ let firstWave = true;
 let waveStartLock = false;
 let highScore = parseInt(localStorage.getItem('gdh_highScore')) || 0;
 highScoreDisplay.textContent = highScore;
+let revived = false; // 부활 여부
+let reviveCount = 0; // 부활 횟수
+const ADMIN_KEY = 'unrevr2025!!';
 
 const cells = [];
 const enemies = [];
@@ -893,7 +896,7 @@ function spawnEnemy() {
     // wave 6부터 체력 보너스 적용
     let hpBonus = 0;
     if (wave >= 6) {
-      hpBonus = (wave - 5) * 10; // 6웨이브부터 웨이브마다 +10씩 추가
+      hpBonus = (wave - 5) * 7; // 6웨이브부터 웨이브마다 +7씩 추가
     }
     enemies.push({
       type: base.type,
@@ -1370,14 +1373,101 @@ for(let i=projectiles.length-1;i>=0;i--){
     }
     if (e.x > 800 && e.hp > 0) {
       console.log('살아있는 적군이 끝 도달', e);
-      const dmg = e.hp * 0.025;
+      const dmg = e.damageToCell * (e.hp / e.maxHp);
       health = Math.max(0, health - dmg);
       healthDisplay.textContent = health.toFixed(2);
       enemies.splice(i, 1);
       if (health <= 0) {
-        showWaveBanner('게임 종료!');
-        // 점수 표시 등 추가 코드가 있다면 여기에
-        return;
+        if (reviveCount < 2) {
+          let reviveCost = reviveCount === 0 ? 500 : 750;
+          let reviveMsg = reviveCount === 0 ? '코인 500개로 부활하시겠습니까?' : '코인 750개로 부활하시겠습니까?';
+          showWaveBanner('관리자 키를 입력해야 부활할 수 있습니다!');
+          // 입력창 및 버튼 생성
+          const overlay = document.createElement('div');
+          overlay.style.position = 'fixed';
+          overlay.style.top = '0';
+          overlay.style.left = '0';
+          overlay.style.width = '100vw';
+          overlay.style.height = '100vh';
+          overlay.style.background = 'rgba(0,0,0,0.7)';
+          overlay.style.zIndex = 2000;
+          overlay.style.display = 'flex';
+          overlay.style.flexDirection = 'column';
+          overlay.style.justifyContent = 'center';
+          overlay.style.alignItems = 'center';
+
+          const msg = document.createElement('div');
+          msg.textContent = reviveMsg;
+          msg.style.color = '#fff';
+          msg.style.fontSize = '22px';
+          msg.style.marginBottom = '18px';
+          overlay.appendChild(msg);
+
+          const input = document.createElement('input');
+          input.type = 'password';
+          input.placeholder = '관리자 키 입력';
+          input.style.fontSize = '20px';
+          input.style.padding = '8px';
+          input.style.marginBottom = '12px';
+          overlay.appendChild(input);
+
+          const reviveBtn = document.createElement('button');
+          reviveBtn.textContent = '부활하기';
+          reviveBtn.style.fontSize = '20px';
+          reviveBtn.style.padding = '12px 32px';
+          reviveBtn.style.background = '#ff0';
+          reviveBtn.style.color = '#000';
+          reviveBtn.style.border = '4px solid #4a8';
+          reviveBtn.style.cursor = 'pointer';
+          overlay.appendChild(reviveBtn);
+
+          const errorMsg = document.createElement('div');
+          errorMsg.style.color = '#ff4444';
+          errorMsg.style.fontSize = '16px';
+          errorMsg.style.marginTop = '10px';
+          overlay.appendChild(errorMsg);
+
+          // 포기하기 버튼 추가
+          const giveUpBtn = document.createElement('button');
+          giveUpBtn.textContent = '포기하기';
+          giveUpBtn.style.fontSize = '18px';
+          giveUpBtn.style.padding = '10px 28px';
+          giveUpBtn.style.background = '#888';
+          giveUpBtn.style.color = '#fff';
+          giveUpBtn.style.border = '2px solid #333';
+          giveUpBtn.style.marginTop = '18px';
+          giveUpBtn.style.cursor = 'pointer';
+          overlay.appendChild(giveUpBtn);
+
+          giveUpBtn.onclick = () => {
+            overlay.innerHTML = `<div style='color:#fff;font-size:22px;margin-bottom:12px;'>Score: ${score}</div><div style='color:#ff0;font-size:20px;'>메인 화면으로 이동합니다...</div>`;
+            setTimeout(() => {
+              window.location.href = 'main.html';
+            }, 2000);
+          };
+
+          document.body.appendChild(overlay);
+          cancelAnimationFrame(loopId);
+
+          reviveBtn.onclick = () => {
+            if (input.value !== ADMIN_KEY) {
+              errorMsg.textContent = '관리자 키가 올바르지 않습니다!';
+              return;
+            }
+            // 코인 차감 없이 부활
+            reviveCount++;
+            overlay.remove();
+            health = 5;
+            healthDisplay.textContent = health.toFixed(2);
+            showWaveBanner('생명력이 회복되었습니다!');
+            loopId = requestAnimationFrame(loop);
+          };
+          return;
+        } else {
+          showWaveBanner('게임 종료!');
+          // 점수 표시 등 추가 코드가 있다면 여기에
+          return;
+        }
       }
     }
     if (e.x > 800 && e.hp <= 0) {
