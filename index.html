@@ -218,8 +218,6 @@
           <span id="timer"></span>
           <span id="score">Score: 0</span>
           <span id="highScore">HighScore: 0</span>
-          <!-- ...기존 버튼들 아래에 추가... -->
-          <button id="deleteBtn">세포 삭제</button>
         </div>
 
         <div class="game-area">
@@ -260,11 +258,8 @@ const startBtn = document.getElementById('startBtn');
 const timerDisplay = document.getElementById('timer');
 const scoreDisplay = document.getElementById('score');
 const highScoreDisplay = document.getElementById('highScore');
-const deleteBtn = document.getElementById('deleteBtn');
-let deleteMode = false;
 const MAX_CELLS = 20;
 
-// 이미지 로드
 const imgCell = new Image();
 imgCell.src = 'images/cell.png';
 const imgPlant = new Image();
@@ -279,14 +274,12 @@ imgNeuronEvo.src = 'images/newevo.png';
 const imgPlantEvo = new Image();
 imgPlantEvo.src = 'images/plantevo.png';
 
-
-
 const imgVirusSprite = new Image();
-imgVirusSprite.src = 'images/세균.png';  // virus 대체 이미지
-const imgParasite     = new Image();
-imgParasite.src     = 'images/기생충.png';        // parasite 이미지
-const imgBacteriophageSprite     = new Image();
-imgBacteriophageSprite.src     = 'images/박테리오파지.png';          // bacteria 이미지
+imgVirusSprite.src = 'images/세균.png';
+const imgParasite = new Image();
+imgParasite.src = 'images/기생충.png';
+const imgBacteriophageSprite = new Image();
+imgBacteriophageSprite.src = 'images/박테리오파지.png';
 
 for (let i = 0; i <= 3; i++) {
   const img = new Image();
@@ -294,19 +287,12 @@ for (let i = 0; i <= 3; i++) {
   superBacteriaFrames.push(img);
 }
 
-// ↓ baseCellTypes 아래에 추가
-// 기존 cellDescriptions 대신 이걸로 교체하세요
 const cellDescriptions = {
-  basic:  
-    '기본 세포(Animal Cell): 핵(nucleus), 미토콘드리아(mitochondria), 소포체(ER), 골지체(Golgi), 리소좀(lysosome) 등으로 이루어져 있으며, 단일 표적에 식균 작용(phagocytosis) 기반 공격을 합니다.',
-  neuron: 
-    '뉴런(Neuron): 핵, 미토콘드리아, 소포체, 골지체 외에 시냅스 소포(synaptic vesicle)를 포함하며, 광역 전기 신호를 발사해 주변 모든 적에게 전격 공격을 가합니다.',
-  plant:  
-    '식물 세포(Plant Cell): 세포벽(cell wall), 엽록체(chloroplast), 중앙액포(vacuole), 미토콘드리아, 골지체 등으로 구성되어 있으며, 적의 이동을 차단하고 주변에 지속적인 방어장(Barrier)을 형성합니다.'
+  basic:  '기본 세포(Animal Cell): 핵(nucleus), 미토콘드리아(mitochondria), 소포체(ER), 골지체(Golgi), 리소좀(lysosome) 등으로 이루어져 있으며, 단일 표적에 식균 작용(phagocytosis) 기반 공격을 합니다.',
+  neuron: '뉴런(Neuron): 핵, 미토콘드리아, 소포체, 골지체 외에 시냅스 소포(synaptic vesicle)를 포함하며, 광역 전기 신호를 발사해 주변 모든 적에게 전격 공격을 가합니다.',
+  plant:  '식물 세포(Plant Cell): 세포벽(cell wall), 엽록체(chloroplast), 중앙액포(vacuole), 미토콘드리아, 골지체 등으로 구성되어 있으며, 적의 이동을 차단하고 주변에 지속적인 방어장(Barrier)을 형성합니다.'
 };
 
-
-// — 적 이름·설명 매핑 —
 const enemyNames = {
   virus:      '바이러스',
   parasite:   '기생충',
@@ -322,9 +308,7 @@ const enemyDescriptions = {
   monster:    '최종 10웨이브 보스: 압도적 체력과 공격력의 몬스터 군단입니다.'
 };
 
-// 선택된 업그레이드 대상, 셀 배치 중, 적 클릭용
 let selectedEnemy = null;
-
 let ATP = 310;
 let health = 5;
 let wave = 0;
@@ -362,7 +346,6 @@ const enemyTypes = [
   { type:'bacteria',hp:40, speed:0.9, color:'#ff6', size:25 }
 ];
 
-
 function updateUIButtons() {
   const bCost = getPlacementCost('basic');
   const nCost = getPlacementCost('neuron');
@@ -376,10 +359,8 @@ function updateUIButtons() {
   neuronBtn.disabled  = ATP < nCost;
   plantBtn.disabled   = ATP < pCost;
 
-  // 세포 수 표시 업데이트
   document.getElementById('cellCount').textContent = cells.length;
 
-  // 버튼 자체는 항상 보이지만, interWave가 아닐 땐 숨김
   startBtn.style.display = interWave ? 'inline-block' : 'none';
   timerDisplay.style.display = interWave ? 'inline-block' : 'none';
 
@@ -390,7 +371,6 @@ function updateUIButtons() {
   highScoreDisplay.textContent= `HighScore: ${highScore}`;
   updateCellInfo();
 }
-
 
 basicBtn.onclick = () => selectCell('basic');
 neuronBtn.onclick = () => selectCell('neuron');
@@ -413,29 +393,7 @@ canvas.addEventListener('click', e => {
   const x = e.clientX - r.left;
   const y = e.clientY - r.top;
 
-  // 삭제 모드일 때: 세포 클릭 시 삭제
-  if (deleteMode) {
-    for (let i = 0; i < cells.length; i++) {
-      const c = cells[i];
-      const dx = x - c.x;
-      const dy = y - c.y;
-      const hit = (c.type==='plant') ? Math.abs(dx)<=20 && Math.abs(dy)<=30 : Math.hypot(dx,dy)<=20;
-      if (hit) {
-        cells.splice(i, 1);
-        showWaveBanner('세포 삭제됨');
-        deleteMode = false;
-        deleteBtn.style.background = '#4a8';
-        updateUIButtons();
-        updateCellInfo();
-        return;
-      }
-    }
-    // 세포를 클릭하지 않으면 삭제 모드 유지
-    return;
-  }
-
   if (selectedCell) {
-    // 세포 개수 제한
     if (cells.length >= MAX_CELLS) {
       showWaveBanner(`최대 ${MAX_CELLS}개까지만 설치 가능`);
       return;
@@ -542,30 +500,58 @@ function updateCellInfo() {
     return;
   }
 
-  // 3) 세포 클릭 시 삭제 버튼 활성화
+  // 3) 세포 클릭 시 업그레이드/삭제 버튼 활성화
   if (selectedUpgradeTarget) {
     const c    = selectedUpgradeTarget;
     const type = c.type;
     const names= { basic:'기본 세포', neuron:'뉴런', plant:'식물 세포' };
     const curr = { damage:c.damage||0, range:c.range||0, hp:c.maxHp||0 };
+    const next = { ...curr };
+    if (type==='basic')     { next.damage+=2;  next.range+=10; }
+    else if (type==='neuron'){ next.damage+=1.5;next.range+=8; }
+    else /* plant */        { next.hp+=30; }
+    const cost = getUpgradeCost(c);
+
     let html = `
       <div><strong>종류: ${names[type]}</strong></div>
       <div class="description">${cellDescriptions[type]}</div>
-      <div>공격력: ${curr.damage}</div>
-      <div>사거리: ${curr.range}</div>
-      ${type==='plant'?`<div>체력: ${curr.hp}</div>`:``}
-      <button id="cellDeleteBtn" style="margin-top:8px;background:#f44;color:#fff;">이 세포 삭제</button>
+      <div>공격력: ${curr.damage} → ${next.damage}</div>
+      <div>사거리: ${curr.range} → ${next.range}</div>
+      ${type==='plant'?`<div>체력: ${curr.hp} → ${next.hp}</div>`:``}
+      <button id="cellUpgradeBtn" ${ATP<cost?'disabled':''}>레벨업 (${cost})</button>
+      <button id="cellDeleteBtn" style="margin-left:8px;background:#f44;color:#fff;">이 세포 삭제</button>
     `;
     info.innerHTML = html;
-    // 삭제 버튼 이벤트 연결
+
+    // 업그레이드 버튼 이벤트
+    document.getElementById('cellUpgradeBtn').onclick = () => {
+      const target = selectedUpgradeTarget;
+      if (!target) return;
+      if (ATP < cost) return;
+      ATP -= cost;
+      target.upgrade = (target.upgrade||0) + 1;
+      if (c.type==='basic') {
+        target.damage += 2;
+        target.range  += 10;
+      } else if (target.type==='neuron') {
+        target.damage += 1.5;
+        target.range  += 8;
+      } else {
+        target.hp     += 30;
+        target.maxHp  += 30;
+      }
+      selectedUpgradeTarget = target;
+      updateUIButtons();
+      updateCellInfo();
+    };
+    // 삭제 버튼 이벤트
     document.getElementById('cellDeleteBtn').onclick = () => {
       const idx = cells.indexOf(selectedUpgradeTarget);
       if (idx !== -1) {
         cells.splice(idx, 1);
+        selectedUpgradeTarget = null; // 먼저 null 처리
+        updateUIButtons();            // info창도 같이 갱신
         showWaveBanner('세포 삭제됨');
-        selectedUpgradeTarget = null;
-        updateUIButtons();
-        updateCellInfo();
       }
     };
     return;
@@ -573,29 +559,26 @@ function updateCellInfo() {
   info.innerHTML = '';
 }
 
-
 function spawnWave() {
   spawnDone = false;
   enemiesSpawned = 0;
-  // 기본 적 수
   enemiesToSpawn = 5 + wave * 2;
-  // 5의 배수 웨이브에서만 2배
   if (wave % 5 === 0) enemiesToSpawn = (5 + wave * 2) * 2;
   updateUIButtons();
   showWaveBanner(`Wave ${wave}`);
   spawnInterval = setInterval(spawnEnemy, Math.max(2000 - wave*150, 500));
   if (wave % 5 === 0) {
     const y = lines[Math.floor(Math.random() * lines.length)];
-  enemies.push({
-    type: wave===10 ? 'monster' : 'superVirus',
-    x:0, y,
-    hp: 200 + wave*20,
-    maxHp: 200 + wave*20,
-    speed: 0.8,
-    color: '#ff0',
-    size: 50,
-    damageToCell: 3 + Math.floor(wave/5),
-    blocked: false, blockTimer: 0
+    enemies.push({
+      type: wave===10 ? 'monster' : 'superVirus',
+      x:0, y,
+      hp: 200 + wave*20,
+      maxHp: 200 + wave*20,
+      speed: 0.8,
+      color: '#ff0',
+      size: 50,
+      damageToCell: 3 + Math.floor(wave/5),
+      blocked: false, blockTimer: 0
     });
   }
 }
@@ -619,28 +602,23 @@ function spawnEnemy() {
     size: base.size,
     damageToCell: 1 + Math.floor(wave/3),
     blocked: false, blockTimer: 0
- });
+  });
 }
 
-// 설치 비용: 같은 타입 세포 개수에 비례해 +10%씩 상승
 function getPlacementCost(type) {
   const base = baseCellTypes[type].cost;
   const count = cells.filter(c => c.type === type).length;
   return Math.max( Math.floor(base * (1 + count * 0.1)), base );
 }
-
-// 업그레이드 비용: 레벨에 비례해 +50%씩 상승
 function getUpgradeCost(cell) {
   const base = 50;
   const lvl  = cell.upgrade || 0;
   return Math.floor(base * (1 + lvl * 0.5));
 }
 
-
 function startInterWave() {
   interWave = true;
   waveStartLock = false;
-  // ATP 보상 감소: 100 + wave*50 → 60 + wave*30
   ATP += (60 + wave * 30);
 
   const duration = 30 * 1000;
@@ -659,8 +637,6 @@ function startInterWave() {
   }, 200);
 }
 
-
-
 function showWaveBanner(txt) {
   waveBanner.textContent = txt;
   waveBanner.style.opacity = 1;
@@ -673,7 +649,6 @@ function drawElectricArc(x,y,ts) { ctx.strokeStyle='yellow';ctx.lineWidth=3;ts.f
 
 function drawCellImage(cell) {
   const evolved = cell.upgrade >= 5;
-
   if (cell.type === 'plant') {
     const img = evolved ? imgPlantEvo : imgPlant;
     ctx.drawImage(img, cell.x - 20, cell.y - 30, 40, 60);
@@ -686,12 +661,10 @@ function drawCellImage(cell) {
   }
 }
 
-
 function loop() {
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0,0,800,600);
   ctx.globalAlpha = 1;
-  // 설치 프리뷰
   if (selectedCell) {
     ctx.save(); ctx.globalAlpha = 0.3;
     if (selectedCell === 'plant') {
@@ -702,53 +675,43 @@ function loop() {
       ctx.drawImage(imgNeuron, mouseX - 20, mouseY - 20, 40, 40);
     }
     ctx.restore();
-    // 사거리 원
     const t = baseCellTypes[selectedCell];
     ctx.strokeStyle='white';ctx.lineWidth=2;
     ctx.beginPath();ctx.arc(mouseX,mouseY,t.range,0,Math.PI*2);ctx.stroke();
   }
-    // 블럭 스타일 레인 그리기
-    ctx.fillStyle = '#4a8';
-    lines.forEach(y => {
-      // 4px 두께의 네온 그린 밴드
-      ctx.fillRect(0, y - 2, canvas.width, 4);
-    });
-
-  // 세포
-cells.forEach(cell => {
-   drawCellImage(cell);
-   // 1) 레벨 항상 표시 (Lv.0부터)
-   ctx.fillStyle = 'white';
-   ctx.font      = '12px Arial';
-   ctx.fillText(`Lv.${cell.upgrade}`, cell.x - 12, cell.y + 30);
-   // 2) 식물 세포 전용 HP 바
-   if (cell.type === 'plant') {
-     drawHealthBar(cell.x - 20, cell.y + 35, 40, 6, cell.hp, cell.maxHp);
-   }
-   // 3) 선택된 세포 강조 (웨이브 중에도)
-   if (cell === selectedUpgradeTarget) {
-     // 사거리 원
-     ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-     ctx.lineWidth   = 2;
-     ctx.beginPath();
-     ctx.arc(cell.x, cell.y, cell.range, 0, Math.PI*2);
-     ctx.stroke();
-     // 테두리 강조
-     ctx.save();
-       ctx.strokeStyle = 'red';
-       ctx.lineWidth   = 3;
-       if (cell.type === 'plant') {
-         ctx.strokeRect(cell.x - 24, cell.y - 34, 48, 68);
-       } else {
-         ctx.beginPath();
-         ctx.arc(cell.x, cell.y, 26, 0, Math.PI*2);
-         ctx.stroke();
-       }
-     ctx.restore();
-   }
+  ctx.fillStyle = '#4a8';
+  lines.forEach(y => {
+    ctx.fillRect(0, y - 2, canvas.width, 4);
   });
 
-  // 세포 공격
+  cells.forEach(cell => {
+    drawCellImage(cell);
+    ctx.fillStyle = 'white';
+    ctx.font      = '12px Arial';
+    ctx.fillText(`Lv.${cell.upgrade}`, cell.x - 12, cell.y + 30);
+    if (cell.type === 'plant') {
+      drawHealthBar(cell.x - 20, cell.y + 35, 40, 6, cell.hp, cell.maxHp);
+    }
+    if (cell === selectedUpgradeTarget) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+      ctx.lineWidth   = 2;
+      ctx.beginPath();
+      ctx.arc(cell.x, cell.y, cell.range, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.save();
+        ctx.strokeStyle = 'red';
+        ctx.lineWidth   = 3;
+        if (cell.type === 'plant') {
+          ctx.strokeRect(cell.x - 24, cell.y - 34, 48, 68);
+        } else {
+          ctx.beginPath();
+          ctx.arc(cell.x, cell.y, 26, 0, Math.PI*2);
+          ctx.stroke();
+        }
+      ctx.restore();
+    }
+  });
+
   cells.forEach(cell=>{
     if(cell.type==='plant') return;
     if(cell.cooldown>0){ cell.cooldown--; return; }
@@ -772,98 +735,76 @@ cells.forEach(cell => {
     }
   });
 
-enemies.forEach(e => {
-  // ── 1) 이동 속도 세팅 ──
-  const speed = e.speed;
-
-  // ── 2) 충돌 검사 ──
-  let didCollide = false;
-  for (const cell of cells) {
-    const dx = e.x - cell.x;
-    const dy = e.y - cell.y;
-
-    // (1) 식물 세포 충돌 → 뒤로 튕기기
-    if (
-      cell.type === 'plant' &&
-      Math.abs(dx) <= cell.width/2 + e.size &&
-      Math.abs(dy) <= cell.height/2 + e.size*0.6
-    ) {
-      // 식물에 데미지
-      cell.hp -= e.damageToCell;
-      if (cell.hp <= 0) cells.splice(cells.indexOf(cell), 1);
-      // 뒤로 튕겨 나가기: 한 프레임만큼 반대 방향 이동
-      e.x -= speed;
-      didCollide = true;
-      break;
+  enemies.forEach(e => {
+    const speed = e.speed;
+    let didCollide = false;
+    for (const cell of cells) {
+      const dx = e.x - cell.x;
+      const dy = e.y - cell.y;
+      if (
+        cell.type === 'plant' &&
+        Math.abs(dx) <= cell.width/2 + e.size &&
+        Math.abs(dy) <= cell.height/2 + e.size*0.6
+      ) {
+        cell.hp -= e.damageToCell;
+        if (cell.hp <= 0) cells.splice(cells.indexOf(cell), 1);
+        e.x -= speed;
+        didCollide = true;
+        break;
+      }
+      if (
+        cell.type !== 'plant' &&
+        Math.hypot(dx, dy) < 25
+      ) {
+        cell.hp -= e.damageToCell;
+        if (cell.hp <= 0) cells.splice(cells.indexOf(cell), 1);
+      }
     }
-
-    // (2) 기본/뉴런 세포 충돌 → 피해만 주고 통과
-    if (
-      cell.type !== 'plant' &&
-      Math.hypot(dx, dy) < 25
-    ) {
-      cell.hp -= e.damageToCell;
-      if (cell.hp <= 0) cells.splice(cells.indexOf(cell), 1);
+    if (!didCollide) {
+      e.x += speed;
     }
-  }
-
-  // ── 3) 충돌 없으면 앞으로 이동 ──
-  if (!didCollide) {
-    e.x += speed;
-  }
-
-  // ── 4) 렌더링 & 강조 & HP바 ──
-  if (e.type === 'superVirus') {
-    e.animTick = (e.animTick || 0) + 1;
-    if (e.animTick % 8 === 0) {
-      e.animFrame = ((e.animFrame || 0) + 1) % superBacteriaFrames.length;
-    }
-    ctx.drawImage(
-      superBacteriaFrames[e.animFrame || 0],
-      e.x - e.size, e.y - e.size,
-      e.size * 2, e.size * 2
-    );
+    if (e.type === 'superVirus') {
+      e.animTick = (e.animTick || 0) + 1;
+      if (e.animTick % 8 === 0) {
+        e.animFrame = ((e.animFrame || 0) + 1) % superBacteriaFrames.length;
+      }
+      ctx.drawImage(
+        superBacteriaFrames[e.animFrame || 0],
+        e.x - e.size, e.y - e.size,
+        e.size * 2, e.size * 2
+      );
     } else if (e.type === 'virus') {
-      // virus 타입 → 세균 이미지
       ctx.drawImage(
         imgVirusSprite,
         e.x - e.size, e.y - e.size,
         e.size * 2, e.size * 2
       );
     } else if (e.type === 'parasite') {
-      // parasite 타입 → 기생충 이미지
       ctx.drawImage(
         imgParasite,
         e.x - e.size, e.y - e.size,
         e.size * 2, e.size * 2
       );
     } else if (e.type === 'bacteria') {
-      // bacteria 타입 → 박테리오파지 이미지
       ctx.drawImage(
         imgBacteriophageSprite,
         e.x - e.size, e.y - e.size,
         e.size * 2, e.size * 2
       );
-  }
+    }
+    if (e === selectedEnemy) {
+      ctx.save();
+        ctx.strokeStyle = 'yellow';
+        ctx.lineWidth   = 3;
+        ctx.beginPath();
+        ctx.ellipse(e.x, e.y, e.size + 4, e.size * 0.6 + 4, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      ctx.restore();
+    }
+    drawHealthBar(e.x - e.size, e.y - e.size - 10, e.size*2, 6, e.hp, e.maxHp);
+    drawEnemyStats(e);
+  });
 
-  // 선택 강조
-  if (e === selectedEnemy) {
-    ctx.save();
-      ctx.strokeStyle = 'yellow';
-      ctx.lineWidth   = 3;
-      ctx.beginPath();
-      ctx.ellipse(e.x, e.y, e.size + 4, e.size * 0.6 + 4, 0, 0, Math.PI * 2);
-      ctx.stroke();
-    ctx.restore();
-  }
-
-  drawHealthBar(e.x - e.size, e.y - e.size - 10, e.size*2, 6, e.hp, e.maxHp);
-  drawEnemyStats(e);
-});
-  
-
-
-  // 투사체
   for(let i=projectiles.length-1;i>=0;i--){
     const p=projectiles[i];
     if(!p.target||p.target.hp<=0){ projectiles.splice(i,1); continue; }
@@ -879,7 +820,6 @@ enemies.forEach(e => {
     if(cell.type==='neuron'&&cell.arcTargets&&cell.cooldown>0) drawElectricArc(cell.x,cell.y,cell.arcTargets);
   });
 
-  // 적 제거·체력 소진
   for(let i=enemies.length-1;i>=0;i--){
     const e = enemies[i];
     if(e.hp<=0){ enemies.splice(i,1); score+=10; ATP+=20;}
