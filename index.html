@@ -271,6 +271,28 @@ const imgPlant = new Image();
 imgPlant.src = 'images/plant.png';
 const imgNeuron = new Image();
 imgNeuron.src = 'images/new.png';
+const superBacteriaFrames = [];
+const imgCellEvo = new Image();
+imgCellEvo.src = 'images/Cellevo.png';
+const imgNeuronEvo = new Image();
+imgNeuronEvo.src = 'images/newevo.png';
+const imgPlantEvo = new Image();
+imgPlantEvo.src = 'images/plantevo.png';
+
+
+
+const imgVirusSprite = new Image();
+imgVirusSprite.src = 'images/세균.png';  // virus 대체 이미지
+const imgParasite     = new Image();
+imgParasite.src     = 'images/기생충.png';        // parasite 이미지
+const imgBacteriophageSprite     = new Image();
+imgBacteriophageSprite.src     = 'images/박테리오파지.png';          // bacteria 이미지
+
+for (let i = 0; i <= 3; i++) {
+  const img = new Image();
+  img.src = `images/superbacteria${i}.png`;
+  superBacteriaFrames.push(img);
+}
 
 // ↓ baseCellTypes 아래에 추가
 // 기존 cellDescriptions 대신 이걸로 교체하세요
@@ -650,14 +672,20 @@ function drawEnemyStats(e) { ctx.fillStyle='white';ctx.font='12px Arial';ctx.fil
 function drawElectricArc(x,y,ts) { ctx.strokeStyle='yellow';ctx.lineWidth=3;ts.forEach(t=>{ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(t.x,t.y);ctx.stroke();}); }
 
 function drawCellImage(cell) {
+  const evolved = cell.upgrade >= 5;
+
   if (cell.type === 'plant') {
-    ctx.drawImage(imgPlant, cell.x - 20, cell.y - 30, 40, 60);
+    const img = evolved ? imgPlantEvo : imgPlant;
+    ctx.drawImage(img, cell.x - 20, cell.y - 30, 40, 60);
   } else if (cell.type === 'basic') {
-    ctx.drawImage(imgCell, cell.x - 20, cell.y - 20, 40, 40);
+    const img = evolved ? imgCellEvo : imgCell;
+    ctx.drawImage(img, cell.x - 20, cell.y - 20, 40, 40);
   } else if (cell.type === 'neuron') {
-    ctx.drawImage(imgNeuron, cell.x - 20, cell.y - 20, 40, 40);
+    const img = evolved ? imgNeuronEvo : imgNeuron;
+    ctx.drawImage(img, cell.x - 20, cell.y - 20, 40, 40);
   }
 }
+
 
 function loop() {
   ctx.imageSmoothingEnabled = false;
@@ -785,12 +813,38 @@ enemies.forEach(e => {
   }
 
   // ── 4) 렌더링 & 강조 & HP바 ──
-  ctx.fillStyle = e.color;
-  ctx.beginPath();
-  ctx.ellipse(e.x, e.y, e.size, e.size * 0.6, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = 'black';
-  ctx.stroke();
+  if (e.type === 'superVirus') {
+    e.animTick = (e.animTick || 0) + 1;
+    if (e.animTick % 8 === 0) {
+      e.animFrame = ((e.animFrame || 0) + 1) % superBacteriaFrames.length;
+    }
+    ctx.drawImage(
+      superBacteriaFrames[e.animFrame || 0],
+      e.x - e.size, e.y - e.size,
+      e.size * 2, e.size * 2
+    );
+    } else if (e.type === 'virus') {
+      // virus 타입 → 세균 이미지
+      ctx.drawImage(
+        imgVirusSprite,
+        e.x - e.size, e.y - e.size,
+        e.size * 2, e.size * 2
+      );
+    } else if (e.type === 'parasite') {
+      // parasite 타입 → 기생충 이미지
+      ctx.drawImage(
+        imgParasite,
+        e.x - e.size, e.y - e.size,
+        e.size * 2, e.size * 2
+      );
+    } else if (e.type === 'bacteria') {
+      // bacteria 타입 → 박테리오파지 이미지
+      ctx.drawImage(
+        imgBacteriophageSprite,
+        e.x - e.size, e.y - e.size,
+        e.size * 2, e.size * 2
+      );
+  }
 
   // 선택 강조
   if (e === selectedEnemy) {
