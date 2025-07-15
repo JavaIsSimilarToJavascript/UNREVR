@@ -227,8 +227,6 @@ function loop() {
     }
     drawHealthBar(cell.x - 20, cell.y - 35, 40, 6, cell.hp, baseCellTypes[cell.type].hp);
     if (cell.upgrade > 0) {
-      ctx.fillStyle = 'white';
-      ctx.font = '12px Arial';
       ctx.fillText(`Lv.${cell.upgrade}`, cell.x - 12, cell.y + 30);
     }
   });
@@ -351,3 +349,47 @@ updateUIButtons();
 waveDisplay.textContent = wave;
 startWave();
 loop();
+
+// 3) 세포 클릭 시 업그레이드 버튼만 활성화 (삭제 버튼 제거)
+if (selectedUpgradeTarget) {
+  const c    = selectedUpgradeTarget;
+  const type = c.type;
+  const names= { basic:'기본 세포', neuron:'뉴런', plant:'식물 세포' };
+  const curr = { damage:c.damage||0, range:c.range||0, hp:c.maxHp||0 };
+  const next = { ...curr };
+  if (type==='basic')     { next.damage+=2;  next.range+=10; }
+  else if (type==='neuron'){ next.damage+=1.5;next.range+=8; }
+  else /* plant */        { next.hp+=30; }
+  const cost = getUpgradeCost(c);
+
+  let html = `
+    <div><strong>종류: ${names[type]}</strong></div>
+    <div class="description">${cellDescriptions[type]}</div>
+    <div>공격력: ${curr.damage} → ${next.damage}</div>
+    <div>사거리: ${curr.range} → ${next.range}</div>
+    ${type==='plant'?`<div>체력: ${curr.hp} → ${next.hp}</div>`:``}
+    <button id="cellUpgradeBtn" ${ATP<cost?'disabled':''}>레벨업 (${cost})</button>
+  `;
+  info.innerHTML = html;
+
+  // 업그레이드 버튼 이벤트
+  document.getElementById('cellUpgradeBtn').onclick = () => {
+    if (ATP < cost) return;
+    ATP -= cost;
+    c.upgrade = (c.upgrade||0) + 1;
+    if (c.type==='basic') {
+      c.damage += 2;
+      c.range  += 10;
+    } else if (c.type==='neuron') {
+      c.damage += 1.5;
+      c.range  += 8;
+    } else {
+      c.hp     += 30;
+      c.maxHp  += 30;
+    }
+    updateUIButtons();
+    updateCellInfo();
+  };
+  return;
+}
+info.innerHTML = '';
