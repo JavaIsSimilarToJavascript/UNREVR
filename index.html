@@ -869,7 +869,7 @@ function spawnEnemy() {
       bossDmg = 10;  // 중간보스 공격력 강화
     } else if (wave === 15) {
       bossType = 'cancerCell';
-      bossHp = 1200; // 15웨이브 보스 체력(적절히 조정)
+      bossHp = 1000; // 15웨이브 보스 체력(적절히 조정)
       bossDmg = 15;  // 15웨이브 보스 공격력(적절히 조정)
     }
     const enemy = {
@@ -1342,7 +1342,7 @@ for(let i=projectiles.length-1;i>=0;i--){
     projectiles.splice(i,1);
   } else {
     p.x+=(dx/d)*p.speed; p.y+=(dy/d)*p.speed;
-    ctx.fillStyle = p.isWhiteBlood ? '#fff' : 'white';
+    ctx.fillStyle = p.isWhiteBlood ? '#FF0000' : 'red';
     ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2); ctx.fill();
   }
 }
@@ -1365,9 +1365,9 @@ for(let i=projectiles.length-1;i>=0;i--){
           x: 0, y: y,
           hp: 1800,
           maxHp: 1800,
-          speed: 1.0,
+          speed: 1.2,
           color: '#f0f',
-          size: 60,
+          size: 80,
           damageToCell: 20,
           blocked: false, blockTimer: 0,
           animFrame: 0,
