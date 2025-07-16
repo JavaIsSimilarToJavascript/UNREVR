@@ -1158,10 +1158,10 @@ function loop() {
       if(d<=cell.range && d<minD){ minD=d; target=e; }
     });
     if(target){
-      cell.cooldown = cell.upgrade >= 5 ? 30 : type.cooldownMax;
+      cell.cooldown = cell.upgrade >=  6 ? 30 : type.cooldownMax;
       projectiles.push({
         x:cell.x, y:cell.y, target, damage:cell.damage, speed:type.projectileSpeed,
-        isWhiteBlood: cell.upgrade >= 5
+        isWhiteBlood: cell.upgrade >= 6
       });
     }
   } else if(cell.type==='neuron'){
@@ -1169,7 +1169,7 @@ function loop() {
     if (hits.length) {
       hits.forEach(e => {
         e.hp -= cell.damage;
-        if (!mapConfig.gimmick?.neuronStunResistance && cell.upgrade >= 5) {
+        if (!mapConfig.gimmick?.neuronStunResistance && cell.upgrade >= 6) {
           e.stun = 10;
         }
       });
