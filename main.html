@@ -1462,6 +1462,10 @@ for(let i=projectiles.length-1;i>=0;i--){
             }, 2000);
           };
 
+
+
+
+          
           document.body.appendChild(overlay);
           cancelAnimationFrame(loopId);
 
@@ -1491,7 +1495,6 @@ for(let i=projectiles.length-1;i>=0;i--){
     }
   }
 
-  
   if (!interWave && !waveInProgress && spawnDone && enemies.length === 0) {
     startInterWave();
   }
