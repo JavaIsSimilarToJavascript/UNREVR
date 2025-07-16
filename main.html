@@ -396,7 +396,6 @@ const plantBtn = document.getElementById('plantBtn');
 const startBtn = document.getElementById('startBtn');
 const timerDisplay = document.getElementById('timer');
 const scoreDisplay = document.getElementById('score');
-const highScoreDisplay = document.getElementById('highScore');
 
 // 이미지 로드
 const imgCell = new Image();
@@ -492,8 +491,6 @@ let mouseX = 0, mouseY = 0;
 let score = 0;
 let firstWave = true;
 let waveStartLock = false;
-let highScore = parseInt(localStorage.getItem('gdh_highScore')) || 0;
-highScoreDisplay.textContent = highScore;
 let revived = false; // 부활 여부
 let reviveCount = 0; // 부활 횟수
 const ADMIN_KEY = 'unrevr2025!!';
@@ -581,7 +578,6 @@ plantBtn.disabled   = ATP < pCost;
   healthDisplay.textContent   = Math.floor(health);
   waveDisplay.textContent     = wave;
   scoreDisplay.textContent    = `Score: ${score}`;
-  highScoreDisplay.textContent= `HighScore: ${highScore}`;
 }
 
 
@@ -1506,6 +1502,7 @@ updateUIButtons();
 waveDisplay.textContent = wave;
 scoreDisplay.textContent = `Score: ${score}`;
 loop();
+
   </script>
 </body>
 </html>
