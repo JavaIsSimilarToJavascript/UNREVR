@@ -477,8 +477,8 @@ const enemyDescriptions = {
 let selectedEnemy = null;
 
 let ATP = 500;
-let health = 5;
-let wave = 0;
+let health = 101;
+let wave = 9;
 let enemiesToSpawn = 0;
 let enemiesSpawned = 0;
 let waveInProgress = false;
@@ -827,6 +827,9 @@ function spawnWave() {
   // --- 중간보스 경고 및 세포 제거 (10웨이브) ---
   if (wave === 10) {
     showWaveBanner('중간보스 등장!');
+    setTimeout(() => {
+      showWaveBanner('랜덤 세포 3개 제거');
+    },1000)
     // 1초 후 중간보스 등장(연출)
     setTimeout(() => {
       // 세포 3개 랜덤 제거 (이펙트 적용)
